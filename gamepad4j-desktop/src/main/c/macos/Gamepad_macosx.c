@@ -280,7 +280,7 @@ printf("CHECKPOINT-4\n");
 	
 	cfProductName = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
 	if (cfProductName == NULL || CFGetTypeID(cfProductName) != CFStringGetTypeID()) {
-		description = malloc(strlen("[Unknown]" + 1));
+		description = malloc(strlen("[Unknown]") + 1);
 		strcpy(description, "[Unknown]");
 		
 	} else {
@@ -293,6 +293,7 @@ printf("CHECKPOINT-4\n");
 	}
 	deviceRecord->description = description;
 	
+printf("CHECKPOINT-5\n");
 	elements = IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
 	for (elementIndex = 0; elementIndex < CFArrayGetCount(elements); elementIndex++) {
 		element = (IOHIDElementRef) CFArrayGetValueAtIndex(elements, elementIndex);
@@ -339,6 +340,7 @@ printf("CHECKPOINT-4\n");
 		deviceEventQueue = realloc(deviceEventQueue, sizeof(struct Gamepad_queuedEvent) * deviceEventQueueSize);
 	}
 	deviceEventQueue[deviceEventCount++] = queuedEvent;
+printf("CHECKPOINT-6\n");
 }
 
 static void disposeDevice(struct Gamepad_device * deviceRecord) {
@@ -424,7 +426,7 @@ void Gamepad_init() {
 		dictionaries[0] = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		CFRelease(values[0]);
 		CFRelease(values[1]);
-		
+
 		value = kHIDPage_GenericDesktop;
 		values[0] = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &value);
 		value = kHIDUsage_GD_GamePad;
@@ -432,7 +434,7 @@ void Gamepad_init() {
 		dictionaries[1] = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		CFRelease(values[0]);
 		CFRelease(values[1]);
-		
+
 		value = kHIDPage_GenericDesktop;
 		values[0] = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &value);
 		value = kHIDUsage_GD_MultiAxisController;
@@ -440,7 +442,6 @@ void Gamepad_init() {
 		dictionaries[2] = CFDictionaryCreate(kCFAllocatorDefault, (const void **) keys, (const void **) values, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		CFRelease(values[0]);
 		CFRelease(values[1]);
-		
 		array = CFArrayCreate(kCFAllocatorDefault, (const void **) dictionaries, 3, &kCFTypeArrayCallBacks);
 		CFRelease(dictionaries[0]);
 		CFRelease(dictionaries[1]);
@@ -449,12 +450,16 @@ void Gamepad_init() {
 		IOHIDManagerSetDeviceMatchingMultiple(hidManager, array);
 		CFRelease(array);
 printf("CHECKPOINT-1\n");
+fflush(stdout);
 		IOHIDManagerRegisterDeviceMatchingCallback(hidManager, onDeviceMatched, NULL);
 printf("CHECKPOINT-2\n");
+fflush(stdout);
 		IOHIDManagerRegisterDeviceRemovalCallback(hidManager, onDeviceRemoved, NULL);
 printf("CHECKPOINT-3a\n");
+fflush(stdout);
 		CFRunLoopRun();
 printf("CHECKPOINT-3b\n");
+fflush(stdout);
 	}
 }
 
@@ -477,7 +482,8 @@ void Gamepad_shutdown() {
 }
 
 unsigned int Gamepad_numDevices() {
-printf("CHECKPOINT-6\n");
+//printf("CHECKPOINT-6\n");
+//fflush(stdout);
 	return numDevices;
 }
 
@@ -532,7 +538,7 @@ void Gamepad_detectDevices() {
 		printf("Gamepad_macosx.c: hidManager is null\n");
 		return;
 	}
-	printf("Gamepad_macosx.c: deviceEventCount=%lu\n", deviceEventCount);
+//	printf("Gamepad_macosx.c: deviceEventCount=%lu\n", deviceEventCount);
 	for (eventIndex = 0; eventIndex < deviceEventCount; eventIndex++) {
 		processQueuedEvent(deviceEventQueue[eventIndex]);
 	}
@@ -543,10 +549,12 @@ void Gamepad_processEvents() {
 	unsigned int eventIndex;
 	static bool inProcessEvents;
 	
+printf("CHECKPOINT-7\n");
 	if (hidManager == NULL || inProcessEvents) {
 		return;
 	}
 	
+printf("CHECKPOINT-8\n");
 	inProcessEvents = true;
 	for (eventIndex = 0; eventIndex < inputEventCount; eventIndex++) {
 		processQueuedEvent(inputEventQueue[eventIndex]);
@@ -554,4 +562,5 @@ void Gamepad_processEvents() {
 	}
 	inputEventCount = 0;
 	inProcessEvents = false;
+printf("CHECKPOINT-9\n");
 }

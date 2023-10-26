@@ -12,31 +12,30 @@ package org.gamepad4j.util;
  */
 public enum Platform {
 
-	ouya(""),
-	macos("libgamepad4j.jnilib"),
-	windows("libgamepad4j.dll"),
-	linux("libgamepad4j.so"),
-	unknown("");
+    ouya(""),
+    macos("libgamepad4j.dylib"),
+    windows("libgamepad4j.dll"),
+    linux("libgamepad4j.so"),
+    unknown("");
 
-	/**
-	 * Creates a platform type holder.
-	 * 
-	 * @param libraryName The name of the native shared library file.
-	 */
-	Platform(String libraryName) {
-		this.libraryName = libraryName;
-	}
-	
-	/**
-	 * Returns the name of the shared library file.
-	 * 
-	 * @return The library filename.
-	 */
-	public String getLibraryName() {
-		return libraryName;
-	}
-	
-	/** Stores the name of the native library file. */
-	private String libraryName = null;
+    /**
+     * Creates a platform type holder.
+     *
+     * @param libraryName The name of the native shared library file.
+     */
+    Platform(String libraryName) {
+        this.libraryName = libraryName;
+    }
 
+    /**
+     * Returns the name of the shared library file.
+     *
+     * @return The library filename.
+     */
+    public String getLibraryName() {
+        return libraryName;
+    }
+
+    /** Stores the name of the native library file. */
+    private String libraryName;
 }

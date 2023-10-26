@@ -14,7 +14,6 @@ public class Demo extends JFrame {
         setTitle("GamepadAPI DemoTest");
         setResizable(false);
         setVisible(true);
-        
     }
 
     public static void main(String[] args) {
