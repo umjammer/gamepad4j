@@ -39,7 +39,7 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
     static final Logger logger = Logger.getLogger(MappingToolWindow.class.getName());
 
     /** Stores ImageIcon instances for various pads. */
-    public static Map<Long, ImageIcon> padImageMap = new HashMap<Long, ImageIcon>();
+    public static Map<Long, ImageIcon> padImageMap = new HashMap<>();
 
     private static int numberOfPads = 0;
 
@@ -58,7 +58,7 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
             filenameProps.load(in);
 
             // Store controller-specific images
-            Enumeration keys = filenameProps.keys();
+            Enumeration<Object> keys = filenameProps.keys();
             while (keys.hasMoreElements()) {
                 String key = (String) keys.nextElement();
                 String imageFilename = filenameProps.getProperty(key);
@@ -66,7 +66,7 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
                 int vendorID = Integer.parseInt(id, 16);
                 id = key.substring(key.indexOf("_") + 3);
                 int productID = Integer.parseInt(id, 16);
-                long deviceTypeIdentifier = (vendorID << 16) + productID;
+                long deviceTypeIdentifier = ((long) vendorID << 16) + productID;
                 logger.fine(">> load image: " + imageFilename);
                 InputStream input = MappingToolWindow.class.getResourceAsStream(imageFilename);
                 ImageInputStream imageIn = ImageIO.createImageInputStream(input);
@@ -83,8 +83,7 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
             padImageMap.put(0L, padImage);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
+            throw new IllegalStateException(e);
         }
 
         Controllers.instance().addListener(this);
@@ -105,54 +104,39 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
         pack();
     }
 
-
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IControllerListener#connected(org.gamepad4j.IController)
-     */
     @Override
     public void connected(IController controller) {
         System.out.println(">> Gamepad connected.");
         updateWindow();
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IControllerListener#disConnected(org.gamepad4j.IController)
-     */
     @Override
     public void disConnected(IController controller) {
         System.out.println(">> Gamepad disconnected.");
         updateWindow();
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IControllerListener#buttonDown(org.gamepad4j.IController, org.gamepad4j.IButton, org.gamepad4j.ButtonID)
-     */
     @Override
     public void buttonDown(IController controller, IButton button,
                            ButtonID buttonID) {
         System.out.println(">> button down");
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IControllerListener#buttonUp(org.gamepad4j.IController, org.gamepad4j.IButton, org.gamepad4j.ButtonID)
-     */
     @Override
     public void buttonUp(IController controller, IButton button,
                          ButtonID buttonID) {
         System.out.println(">> button up");
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IControllerListener#moveStick(org.gamepad4j.IController, org.gamepad4j.StickID)
-     */
     @Override
     public void moveStick(IController controller, StickID stick) {
         System.out.println(">> move stick");
     }
 
 
-    class TestWindowListener extends WindowAdapter {
+    static class TestWindowListener extends WindowAdapter {
 
+        @Override
         public void windowClosing(WindowEvent e) {
             GamepadCheck.running = false;
             Controllers.shutdown();

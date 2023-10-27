@@ -166,26 +166,7 @@ public class MacosxGamepad implements Gamepad {
         inputEventQueue[inputEventCount++] = queuedEvent;
     }
 
-    private void queueAxisEvent(Device device, double timestamp, int axisID, float value) {
-        AxisEventData axisEvent = new AxisEventData();
-        axisEvent.device = device;
-        axisEvent.timestamp = timestamp;
-        axisEvent.axisID = axisID;
-        axisEvent.value = value;
-
-        queueInputEvent(device.deviceID, EventType.AXIS_MOVED, axisEvent);
-    }
-
-    private void queueButtonEvent(Device device, double timestamp, int buttonID, boolean down) {
-        ButtonEventData buttonEvent = new ButtonEventData();
-        buttonEvent.device = device;
-        buttonEvent.timestamp = timestamp;
-        buttonEvent.buttonID = buttonID;
-        buttonEvent.down = down;
-
-        queueInputEvent(device.deviceID, down ? EventType.BUTTON_DOWN : EventType.BUTTON_UP, buttonEvent);
-    }
-
+    /** a cupcell for passing to callback */
     public static class DeviceContext extends Structure {
 
         public int id;
@@ -207,12 +188,17 @@ public class MacosxGamepad implements Gamepad {
         static Map<Integer, Device> map = new HashMap<>();
     }
 
+    /** a callback when a device value changed */
     private void onDeviceValueChanged(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDValueRef */ value) {
-        Device deviceRecord;
-        DevicePrivate hidDeviceRecord;
-        Pointer /* IOHIDElementRef */ element;
-        int /* IOHIDElementCookie */ cookie;
-        int axisIndex, buttonIndex;
+        Device device = DeviceContext.map.get(new DeviceContext(context).id);
+if (device == null) {
+ logger.fine("device is null");
+ return;
+}
+        DevicePrivate hidDeviceRecord = (DevicePrivate) device.privateData;
+        Pointer /* IOHIDElementRef */ element = IOKitLib.INSTANCE.IOHIDValueGetElement(value);
+        int /* IOHIDElementCookie */ cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
+
         mach_timebase_info timebaseInfo = new mach_timebase_info();
 
         if (timebaseInfo.denom == 0) {
@@ -221,12 +207,7 @@ public class MacosxGamepad implements Gamepad {
             timebaseInfo.denom = TimeUnit.NANOSECONDS.toMicros(t) - timebaseInfo.numer * 100;
         }
 
-        deviceRecord = DeviceContext.map.get(new DeviceContext(context).id);
-        hidDeviceRecord = (DevicePrivate) deviceRecord.privateData;
-        element = IOKitLib.INSTANCE.IOHIDValueGetElement(value);
-        cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
-
-        for (axisIndex = 0; axisIndex < deviceRecord.numAxes; axisIndex++) {
+        for (int axisIndex = 0; axisIndex < device.numAxes; axisIndex++) {
             HIDGamepadAxis axisElement = hidDeviceRecord.axisElements.get(axisIndex);
             if (!axisElement.isHatSwitchSecondAxis &&
                     axisElement.cookie == cookie) {
@@ -252,58 +233,60 @@ public class MacosxGamepad implements Gamepad {
 
                     hatValueToXY(integerValue, axisElement.logicalMax.intValue() - axisElement.logicalMin.intValue() + 1, x, y);
 
-                    if (x[0] != deviceRecord.axisStates[axisIndex]) {
-                        queueAxisEvent(deviceRecord,
+                    if (x[0] != device.axisStates[axisIndex]) {
+                        AxisEventData axisEvent = new AxisEventData(device,
                                 (double) (IOKitLib.INSTANCE.IOHIDValueGetTimeStamp(value) * timebaseInfo.numer) / timebaseInfo.denom * 0.000000001,
                                 axisIndex,
                                 x[0]);
+                        queueInputEvent(device.deviceID, EventType.AXIS_MOVED, axisEvent);
 
-                        deviceRecord.axisStates[axisIndex] = x[0];
+                        device.axisStates[axisIndex] = x[0];
                     }
 
-                    if (y[0] != deviceRecord.axisStates[axisIndex + 1]) {
-                        queueAxisEvent(deviceRecord,
+                    if (y[0] != device.axisStates[axisIndex + 1]) {
+                        AxisEventData axisEvent = new AxisEventData(device,
                                 (double) (IOKitLib.INSTANCE.IOHIDValueGetTimeStamp(value) * timebaseInfo.numer) / timebaseInfo.denom * 0.000000001,
                                 axisIndex + 1,
                                 y[0]);
+                        queueInputEvent(device.deviceID, EventType.AXIS_MOVED, axisEvent);
 
-                        deviceRecord.axisStates[axisIndex + 1] = y[0];
+                        device.axisStates[axisIndex + 1] = y[0];
                     }
 
                 } else {
-                    float floatValue;
-
                     if (integerValue < axisElement.logicalMin.intValue()) {
                         axisElement.logicalMin = CFIndex.of(integerValue);
                     }
                     if (integerValue > axisElement.logicalMax.intValue()) {
                         axisElement.logicalMax = CFIndex.of(integerValue);
                     }
-                    floatValue = (integerValue - axisElement.logicalMin.intValue()) /
+                    float floatValue = (integerValue - axisElement.logicalMin.intValue()) /
                             (float) (axisElement.logicalMax.intValue() -
                                     axisElement.logicalMin.intValue()) * 2.0f - 1.0f;
 
-                    queueAxisEvent(deviceRecord,
+                    AxisEventData axisEvent = new AxisEventData(device,
                             (double) (IOKitLib.INSTANCE.IOHIDValueGetTimeStamp(value) * timebaseInfo.numer) / timebaseInfo.denom * 0.000000001,
                             axisIndex,
                             floatValue);
+                    queueInputEvent(device.deviceID, EventType.AXIS_MOVED, axisEvent);
 
-                    deviceRecord.axisStates[axisIndex] = floatValue;
+                    device.axisStates[axisIndex] = floatValue;
                 }
 
                 return;
             }
         }
 
-        for (buttonIndex = 0; buttonIndex < deviceRecord.numButtons; buttonIndex++) {
+        for (int buttonIndex = 0; buttonIndex < device.numButtons; buttonIndex++) {
             if (hidDeviceRecord.buttonElements.get(buttonIndex).cookie == cookie) {
                 boolean down = IOKitLib.INSTANCE.IOHIDValueGetIntegerValue(value).intValue() != 0;
-                queueButtonEvent(deviceRecord,
+                ButtonEventData buttonEvent = new ButtonEventData(device,
                         (double) (IOKitLib.INSTANCE.IOHIDValueGetTimeStamp(value) * timebaseInfo.numer) / timebaseInfo.denom * 0.000000001,
                         buttonIndex,
                         down);
+                queueInputEvent(device.deviceID, down ? EventType.BUTTON_DOWN : EventType.BUTTON_UP, buttonEvent);
 
-                deviceRecord.buttonStates[buttonIndex] = down;
+                device.buttonStates[buttonIndex] = down;
 
                 return;
             }
@@ -321,21 +304,13 @@ public class MacosxGamepad implements Gamepad {
         return value.getValue();
     }
 
-    private static int getVendorID(Pointer /* IOHIDDeviceRef */ deviceRef) {
-        return getIntProperty(deviceRef, CFSTR(kIOHIDVendorIDKey));
-    }
-
-    private static int getProductID(Pointer /* IOHIDDeviceRef */ deviceRef) {
-        return getIntProperty(deviceRef, CFSTR(kIOHIDProductIDKey));
-    }
-
-    /**  */
+    /** */
     private void onDeviceMatched(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
-        logger.finer("CHECKPOINT-4.S");
+logger.finer("CHECKPOINT-4.S");
         Device deviceRecord = new Device();
         deviceRecord.deviceID = nextDeviceID++;
-        deviceRecord.vendorID = getVendorID(device);
-        deviceRecord.productID = getProductID(device);
+        deviceRecord.vendorID = getIntProperty(device, CFSTR(kIOHIDVendorIDKey));
+        deviceRecord.productID = getIntProperty(device, CFSTR(kIOHIDProductIDKey));
         deviceRecord.numAxes = 0;
         deviceRecord.numButtons = 0;
 
@@ -361,7 +336,7 @@ public class MacosxGamepad implements Gamepad {
             description = new String(bytes, 0, length.getValue().intValue());
         }
         deviceRecord.description = description;
-        logger.finer("CHECKPOINT-4.1: " + description);
+logger.finer("CHECKPOINT-4.1: " + description);
 
         CFArray elements = IOKitLib.INSTANCE.IOHIDDeviceCopyMatchingElements(device, null, kIOHIDOptionsTypeNone);
         for (int elementIndex = 0; elementIndex < CFLib.INSTANCE.CFArrayGetCount(elements).intValue(); elementIndex++) {
@@ -416,10 +391,10 @@ public class MacosxGamepad implements Gamepad {
             deviceEventQueue = new QueuedEvent[deviceEventQueueSize];
         }
         deviceEventQueue[deviceEventCount++] = queuedEvent;
-        logger.finer("CHECKPOINT-4.E");
+logger.finer("CHECKPOINT-4.E");
     }
 
-    /**  */
+    /** */
     private void disposeDevice(Device deviceRecord) {
         int inputEventIndex, deviceEventIndex;
 
@@ -450,9 +425,9 @@ public class MacosxGamepad implements Gamepad {
         }
     }
 
-    /**  */
+    /** */
     private void onDeviceRemoved(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
-        logger.fine("onDeviceRemoved: " + device);
+logger.fine("onDeviceRemoved: " + device);
         for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
             if (((DevicePrivate) devices[deviceIndex].privateData).deviceRef == device) {
                 fireDeviceRemove(devices[deviceIndex]);
@@ -474,15 +449,12 @@ public class MacosxGamepad implements Gamepad {
     @Override
     public void init() {
         executorService.submit(this::initInternal);
-        try {
-            cdl.await();
-        } catch (InterruptedException ignore) {
-        }
+        try { cdl.await(); } catch (InterruptedException ignore) {}
     }
 
     private void initInternal() {
         if (hidManager == null) {
-            logger.finer("CHECKPOINT-0.S");
+logger.finer("CHECKPOINT-0.S");
             hidManager = IOKitLib.INSTANCE.IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerScheduleWithRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -534,17 +506,17 @@ public class MacosxGamepad implements Gamepad {
             IOKitLib.INSTANCE.IOHIDManagerRegisterDeviceRemovalCallback(hidManager, this::onDeviceRemoved, null);
 
             cdl.countDown();
-            logger.fine("CHECKPOINT-0.8: bye...");
+logger.fine("CHECKPOINT-0.8: bye...");
 
             CFLib.INSTANCE.CFRunLoopRun();
-            logger.fine("CHECKPOINT-0.E");
+logger.fine("CHECKPOINT-0.E");
         }
     }
 
     @Override
     public void shutdown() {
         executorService.shutdownNow();
-        logger.fine("i am a mac, bye");
+logger.fine("i am a mac, bye");
 
         if (hidManager != null) {
             IOKitLib.INSTANCE.IOHIDManagerUnscheduleFromRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -562,14 +534,14 @@ public class MacosxGamepad implements Gamepad {
 
     @Override
     public int numDevices() {
-        logger.finer("CHECKPOINT-3.0");
+logger.finer("CHECKPOINT-3.0");
         return numDevices;
     }
 
     @Override
     public Device deviceAtIndex(int deviceIndex) {
         if (deviceIndex >= numDevices) {
-            logger.warning(deviceIndex + " >= " + numDevices);
+logger.warning(deviceIndex + " >= " + numDevices);
             return null;
         }
         return devices[deviceIndex];
@@ -605,10 +577,10 @@ public class MacosxGamepad implements Gamepad {
 
     /**  */
     private void processQueuedEvent(QueuedEvent event) {
-        if (event == null) {
-            logger.finer("event is null");
-            return;
-        }
+if (event == null) {
+ logger.finer("event is null");
+ return;
+}
         switch (event.eventType) {
         case DEVICE_ATTACHED: {
             fireDeviceAttach((Device) event.eventData);
@@ -639,10 +611,10 @@ public class MacosxGamepad implements Gamepad {
     @Override
     public void detectDevices() {
         if (hidManager == null) {
-            logger.fine("detectDevices: hidManager is null");
+logger.fine("detectDevices: hidManager is null");
             return;
         }
-        logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
+logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
         for (int eventIndex = 0; eventIndex < deviceEventCount; eventIndex++) {
             processQueuedEvent(deviceEventQueue[eventIndex]);
         }
@@ -655,18 +627,18 @@ public class MacosxGamepad implements Gamepad {
     public void processEvents() {
         int eventIndex;
 
-        logger.finer("CHECKPOINT-7.0");
+logger.finer("CHECKPOINT-7.0");
         if (hidManager == null || inProcessEvents) {
             return;
         }
 
-        logger.finer("CHECKPOINT-7.1");
+logger.finer("CHECKPOINT-7.1");
         inProcessEvents = true;
         for (eventIndex = 0; eventIndex < inputEventCount; eventIndex++) {
             processQueuedEvent(inputEventQueue[eventIndex]);
         }
         inputEventCount = 0;
         inProcessEvents = false;
-        logger.finer("CHECKPOINT-7.2");
+logger.finer("CHECKPOINT-7.2");
     }
 }

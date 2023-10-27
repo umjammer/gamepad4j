@@ -19,7 +19,7 @@
  *
  * <h3>Log level override</h3>
  * <p>
- * Note that by default, the API does not log at all. See {@ILog} for
+ * Note that by default, the API does not log at all. See {@link java.util.logging.Logger} for
  * information on how to implement and set your own custom log adapter.
  * But for simply enabling logging to stdout/stderr, invoke this method
  * BEFORE invoking <code>Controllers.initialize()</code>:

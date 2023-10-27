@@ -31,28 +31,17 @@ public class OuyaControllerProvider implements IControllerProvider {
     /** Map of all connected OUYA controllers. */
     private Map<OuyaController, OuyaControllerWrapper> connected = new HashMap<OuyaController, OuyaControllerWrapper>();
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IControllerProvider#initialize()
-     */
     @Override
     public void initialize() {
         System.out.println("OUYA controller provider ready.");
         updateControllers();
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.gamepad4j.util.IControllerProvider#release()
-     */
     @Override
     public void release() {
         // do nothing
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.gamepad4j.util.IControllerProvider#checkControllers()
-     */
     @Override
     public void checkControllers() {
         boolean update = false;
@@ -97,20 +86,13 @@ public class OuyaControllerProvider implements IControllerProvider {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IControllerProvider#addListener(org.gamepad4j.util.IControllerListener)
-     */
     @Override
     public void addListener(IControllerListener listener) {
         this.listeners.addListener(listener);
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IControllerProvider#removeListener(org.gamepad4j.util.IControllerListener)
-     */
     @Override
     public void removeListener(IControllerListener listener) {
         this.listeners.removeListener(listener);
     }
-
 }

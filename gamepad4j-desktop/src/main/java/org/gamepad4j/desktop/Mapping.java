@@ -9,6 +9,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.gamepad4j.ButtonID;
@@ -29,7 +30,7 @@ public class Mapping {
 
     static final Logger logger = Logger.getLogger(Mapping.class.getName());
 
-    public static enum MappingType {
+    public enum MappingType {
         BUTTON,
         TRIGGER_AXIS,
         DPAD_AXIS,
@@ -58,10 +59,10 @@ public class Mapping {
     private static Map<Long, Map<TriggerID, String>> defaultTriggerLabelMap = new HashMap<>();
 
     /** Stores the label key for each button of each device type. */
-    private static Map<Long, Map<ButtonID, String>> buttonLabelKeyMap = new HashMap<Long, Map<ButtonID, String>>();
+    private static Map<Long, Map<ButtonID, String>> buttonLabelKeyMap = new HashMap<>();
 
     /** Stores the label key for each trigger of each device type. */
-    private static Map<Long, Map<TriggerID, String>> triggerLabelKeyMap = new HashMap<Long, Map<TriggerID, String>>();
+    private static Map<Long, Map<TriggerID, String>> triggerLabelKeyMap = new HashMap<>();
 
     /** Lazy label initialization flag. */
     private static boolean labelsInitialized = false;
@@ -88,9 +89,7 @@ public class Mapping {
                         + "0x" + vendorHex + "-0x" + productHex + "-gamepad4j-mapping.properties";
                 logger.fine("Load mapping from resource: " + mappingFileName);
 
-                InputStream propIn = null;
-                try {
-                    propIn = Mapping.class.getResourceAsStream(mappingFileName);
+                try (InputStream propIn = Mapping.class.getResourceAsStream(mappingFileName)) {
                     if (propIn != null) {
                         Properties mappingProps = new Properties();
                         mappingProps.load(propIn);
@@ -103,17 +102,11 @@ public class Mapping {
                     } else {
                         logger.fine("WARNING: Mapping does not exist: " + mappingFileName);
                     }
-                } finally {
-                    try {
-                        propIn.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
                 }
             }
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+logger.log(Level.FINER, ex.toString(), ex);
             throw new IllegalStateException("Failed to process mappings from resources: " + ex);
         }
     }
@@ -124,10 +117,10 @@ public class Mapping {
     private static void addMappings(Properties properties) {
         long deviceTypeIdentifier = extractDeviceIdentifier(properties);
 
-        defaultButtonLabelMap.put(deviceTypeIdentifier, new HashMap<ButtonID, String>());
-        buttonLabelKeyMap.put(deviceTypeIdentifier, new HashMap<ButtonID, String>());
-        triggerLabelKeyMap.put(deviceTypeIdentifier, new HashMap<TriggerID, String>());
-        defaultTriggerLabelMap.put(deviceTypeIdentifier, new HashMap<TriggerID, String>());
+        defaultButtonLabelMap.put(deviceTypeIdentifier, new HashMap<>());
+        buttonLabelKeyMap.put(deviceTypeIdentifier, new HashMap<>());
+        triggerLabelKeyMap.put(deviceTypeIdentifier, new HashMap<>());
+        defaultTriggerLabelMap.put(deviceTypeIdentifier, new HashMap<>());
 
         Enumeration<Object> keys = properties.keys();
         while (keys.hasMoreElements()) {
@@ -250,11 +243,7 @@ public class Mapping {
      * @return The newly created, or already existing map.
      */
     private static Map<Integer, String> getOrCreateMapForDevice(Map<Long, Map<Integer, String>> idMap, long deviceTypeIdentifier) {
-        Map<Integer, String> map = idMap.get(deviceTypeIdentifier);
-        if (map == null) {
-            map = new HashMap<Integer, String>();
-            idMap.put(deviceTypeIdentifier, map);
-        }
+        Map<Integer, String> map = idMap.computeIfAbsent(deviceTypeIdentifier, k -> new HashMap<>());
         return map;
     }
 
@@ -267,11 +256,7 @@ public class Mapping {
      * @return The newly created, or already existing map.
      */
     private static Map<ButtonID, String> getOrCreateMapForButton(Map<Long, Map<ButtonID, String>> idMap, long deviceTypeIdentifier) {
-        Map<ButtonID, String> map = idMap.get(deviceTypeIdentifier);
-        if (map == null) {
-            map = new HashMap<ButtonID, String>();
-            idMap.put(deviceTypeIdentifier, map);
-        }
+        Map<ButtonID, String> map = idMap.computeIfAbsent(deviceTypeIdentifier, k -> new HashMap<>());
         return map;
     }
 
@@ -284,11 +269,7 @@ public class Mapping {
      * @return The newly created, or already existing map.
      */
     private static Map<TriggerID, String> getOrCreateMapForTrigger(Map<Long, Map<TriggerID, String>> idMap, long deviceTypeIdentifier) {
-        Map<TriggerID, String> map = idMap.get(deviceTypeIdentifier);
-        if (map == null) {
-            map = new HashMap<TriggerID, String>();
-            idMap.put(deviceTypeIdentifier, map);
-        }
+        Map<TriggerID, String> map = idMap.computeIfAbsent(deviceTypeIdentifier, k -> new HashMap<>());
         return map;
     }
 
@@ -304,9 +285,8 @@ public class Mapping {
         try {
             vendorID = Integer.parseInt(properties.getProperty("vendor.id", ""), 16);
             productID = Integer.parseInt(properties.getProperty("product.id", ""), 16);
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException ignore) {
             // ignore
-            ex.printStackTrace();
         }
         if (vendorID == -1) {
             throw new IllegalArgumentException("Invalid/missing vendor ID propery ('vendor.id') in mapping.");
@@ -314,7 +294,7 @@ public class Mapping {
         if (productID == -1) {
             throw new IllegalArgumentException("Invalid/missing product ID propery ('product.id') in mapping.");
         }
-        return (vendorID << 16) + productID;
+        return ((long) vendorID << 16) + productID;
     }
 
     /**
@@ -462,5 +442,4 @@ public class Mapping {
         }
         return id;
     }
-
 }

@@ -96,9 +96,6 @@ public class BaseButton implements IButton {
         // TODO: Implement listener for buttons
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#isPressedOnce()
-     */
     @Override
     public boolean isPressedOnce() {
         boolean pressed = isPressed();
@@ -109,9 +106,6 @@ public class BaseButton implements IButton {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#getLabelKey()
-     */
     @Override
     public String getLabelKey() {
         return this.labelKey;
@@ -124,7 +118,6 @@ public class BaseButton implements IButton {
         this.label = label;
     }
 
-
     /**
      * @param labelKey the labelKey to set
      */
@@ -132,13 +125,8 @@ public class BaseButton implements IButton {
         this.labelKey = labelKey;
     }
 
-
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#getDefaultLabel()
-     */
     @Override
     public String getDefaultLabel() {
         return this.label;
     }
-
 }

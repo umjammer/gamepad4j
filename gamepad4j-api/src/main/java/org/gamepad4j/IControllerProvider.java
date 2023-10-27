@@ -38,12 +38,12 @@ public interface IControllerProvider {
      *
      * @param listener The controller listener.
      */
-    public void addListener(IControllerListener listener);
+    void addListener(IControllerListener listener);
 
     /**
      * Removes a listener for controller events.
      *
      * @param listener The controller listener to remove.
      */
-    public void removeListener(IControllerListener listener);
+    void removeListener(IControllerListener listener);
 }

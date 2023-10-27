@@ -19,13 +19,11 @@ import org.gamepad4j.TriggerID;
 public class BaseTrigger implements ITrigger {
 
     /** Constants for axis value range of trigger. */
-    public static enum ValueRange {
+    public enum ValueRange {
         ALL,
         POSITIVE_ONLY,
         NEGATIVE_ONLY
     }
-
-    ;
 
     /** Stores the value range supported by this trigger. */
     private ValueRange valueRange = ValueRange.ALL;
@@ -52,7 +50,7 @@ public class BaseTrigger implements ITrigger {
      * Creates a trigger wrapper.
      *
      * @param code     The numeric code of the trigger.
-     * @param isAnalog Set to true if this is an analog trigger.
+     * @param axis     an analog trigger.
      * @param label    The text label (may be null).
      * @param labelKey The text label key (may be null).
      */
@@ -94,9 +92,6 @@ public class BaseTrigger implements ITrigger {
         this.valueRange = valueRange;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#getID()
-     */
     @Override
     public TriggerID getID() {
         return this.ID;
@@ -111,18 +106,11 @@ public class BaseTrigger implements ITrigger {
         this.ID = ID;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.gamepad4j.IButton#getIndex()
-     */
     @Override
     public int getCode() {
         return this.code;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.base.BaseButton#analogValue()
-     */
     @Override
     public float analogValue() {
         float value = this.axis.getValue();
@@ -136,9 +124,6 @@ public class BaseTrigger implements ITrigger {
         return 0f;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#getLabelKey()
-     */
     @Override
     public String getLabelKey() {
         return this.labelKey;
@@ -151,7 +136,6 @@ public class BaseTrigger implements ITrigger {
         this.label = label;
     }
 
-
     /**
      * @param labelKey the labelKey to set
      */
@@ -159,13 +143,8 @@ public class BaseTrigger implements ITrigger {
         this.labelKey = labelKey;
     }
 
-
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#getDefaultLabel()
-     */
     @Override
     public String getDefaultLabel() {
         return this.label;
     }
-
 }

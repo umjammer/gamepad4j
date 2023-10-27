@@ -39,9 +39,6 @@ public class ColorBoxPanel extends JPanel implements IAxisListener {
         setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.IAxisListener#moved(float)
-     */
     @Override
     public void moved(float value) {
         super.repaint();

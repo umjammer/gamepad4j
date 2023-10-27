@@ -58,7 +58,7 @@ public class BaseAxis implements IAxis {
     @Override
     public void addAxisListener(IAxisListener listener) {
         if (this.listeners == null) {
-            this.listeners = new ArrayList<IAxisListener>();
+            this.listeners = new ArrayList<>();
         }
         this.listeners.add(listener);
     }

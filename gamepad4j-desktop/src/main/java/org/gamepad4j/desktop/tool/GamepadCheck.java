@@ -4,6 +4,8 @@
 
 package org.gamepad4j.desktop.tool;
 
+import java.util.logging.Logger;
+
 import org.gamepad4j.AxisID;
 import org.gamepad4j.ButtonID;
 import org.gamepad4j.Controllers;
@@ -26,11 +28,10 @@ import org.gamepad4j.TriggerID;
  */
 public class GamepadCheck implements Runnable {
 
+    private static final Logger logger = Logger.getLogger(GamepadCheck.class.getName());
+    
     public static boolean running = true;
 
-    /* (non-Javadoc)
-     * @see java.lang.Runnable#run()
-     */
     @Override
     public void run() {
         while (running) {
@@ -40,37 +41,35 @@ public class GamepadCheck implements Runnable {
             if (controllers != null && controllers.length > 0) {
                 IButton acceptButton = controllers[0].getButton(ButtonID.FACE_DOWN);
                 if (acceptButton != null && acceptButton.isPressedOnce()) {
-                    System.out.println("*** FACE DOWN ***");
+                    logger.fine("*** FACE DOWN ***");
                 }
                 IButton cancelButton = controllers[0].getButton(ButtonID.CANCEL);
                 if (cancelButton != null && cancelButton.isPressedOnce()) {
-                    System.out.println("*** CANCEL / DENY ***");
+                    logger.fine("*** CANCEL / DENY ***");
                 }
 
                 ITrigger triggerLeft = controllers[0].getTrigger(TriggerID.LEFT_DOWN);
                 if (triggerLeft != null) {
                     float trigger = triggerLeft.analogValue();
-//					System.out.println("> left trigger button: " + trigger);
+					logger.finer("> left trigger button: " + trigger);
                     if (trigger < -0.2 || trigger > 0.2) {
-//						System.out.println("> left trigger button: " + trigger);
+						logger.finer("> left trigger button: " + trigger);
                     }
                 }
 
                 DpadDirection dpad = controllers[0].getDpadDirection();
                 if (dpad != DpadDirection.NONE) {
-//					System.out.println("D-Pad: " + dpad);
+					logger.finer("D-Pad: " + dpad);
                 }
 
                 IStick leftStick = controllers[0].getStick(StickID.LEFT);
                 if (leftStick == null) {
-                    System.err.println("no left stick found");
+                    logger.fine("no left stick found");
                 } else {
-					/*
-					DpadDirection stickDpad = leftStick.getPosition().getDirection();
-					if(stickDpad !=	DpadDirection.NONE) {
-						System.out.println(">> left stick as d-pad: " + stickDpad);
-					}
-					*/
+//                    DpadDirection stickDpad = leftStick.getPosition().getDirection();
+//                    if (stickDpad != DpadDirection.NONE) {
+//                        logger.fine(">> left stick as d-pad: " + stickDpad);
+//                    }
 
                     float xAxis = leftStick.getAxis(AxisID.X).getValue();
 
@@ -79,17 +78,12 @@ public class GamepadCheck implements Runnable {
                     float yAxis = leftStick.getAxis(AxisID.Y).getValue();
                     float degree = leftStick.getPosition().getDegree();
                     float distance = leftStick.getPosition().getDistanceToCenter();
-//					System.out.println("> Left stick: X=" + xAxis + ",Y=" + yAxis + ",rotation=" + degree + " / distance: " + distance);
+					logger.finer("> Left stick: X=" + xAxis + ",Y=" + yAxis + ",rotation=" + degree + " / distance: " + distance);
                 }
             } else {
-                System.err.println("No controllers available.");
+                logger.warning("No controllers available.");
             }
-            try {
-                Thread.sleep(150);
-            } catch (InterruptedException e) {
-                // ignore
-            }
+            try { Thread.sleep(150); } catch (InterruptedException ignore) {}
         }
     }
-
 }

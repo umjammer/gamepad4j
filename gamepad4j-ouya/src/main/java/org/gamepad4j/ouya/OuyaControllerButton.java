@@ -63,9 +63,6 @@ public class OuyaControllerButton extends BaseButton {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IButton#isPressed()
-     */
     @Override
     public boolean isPressed() {
         return this.controller.getButton(this.code);

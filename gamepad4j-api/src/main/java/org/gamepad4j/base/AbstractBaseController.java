@@ -49,15 +49,15 @@ public abstract class AbstractBaseController implements IController {
     // ----------------------- d-pad -----------------------------
 
     /** Stores a map for the axes used by an analog d-pad */
-    protected Map<AxisID, BaseAxis> dpadAxisMap = new HashMap<AxisID, BaseAxis>();
+    protected Map<AxisID, BaseAxis> dpadAxisMap = new HashMap<>();
 
     // ----------------------- buttons ---------------------------
 
     /** Lookup map for buttons based on their type. */
-    protected Map<ButtonID, IButton> buttonMap = new HashMap<ButtonID, IButton>();
+    protected Map<ButtonID, IButton> buttonMap = new HashMap<>();
 
     /** Lookup map for button aliases. */
-    protected Map<ButtonID, IButton> buttonAliasMap = new HashMap<ButtonID, IButton>();
+    protected Map<ButtonID, IButton> buttonAliasMap = new HashMap<>();
 
     /** Stores the buttons of this controller. */
     protected BaseButton[] buttons = null;
@@ -65,7 +65,7 @@ public abstract class AbstractBaseController implements IController {
     // ----------------------- triggers ---------------------------
 
     /** Lookup map for buttons based on their type. */
-    protected Map<TriggerID, ITrigger> triggerMap = new HashMap<TriggerID, ITrigger>();
+    protected Map<TriggerID, ITrigger> triggerMap = new HashMap<>();
 
     /** Stores the buttons of this controller. */
     protected BaseTrigger[] triggers = null;
@@ -73,7 +73,7 @@ public abstract class AbstractBaseController implements IController {
     // ----------------------- sticks ---------------------------
 
     /** Lookup map for sticks based on their type. */
-    protected Map<StickID, IStick> stickMap = new HashMap<StickID, IStick>();
+    protected Map<StickID, IStick> stickMap = new HashMap<>();
 
     /** Stores the sticks of this controller. */
     protected BaseStick[] sticks = null;
@@ -181,7 +181,7 @@ public abstract class AbstractBaseController implements IController {
         if (this.productID == -1) {
             throw new IllegalArgumentException("Product ID not set for controller " + this.deviceID + " / " + this.description);
         }
-        return (vendorID << 16) + productID;
+        return ((long) vendorID << 16) + productID;
     }
 
     @Override
@@ -207,7 +207,7 @@ public abstract class AbstractBaseController implements IController {
     @Override
     public DpadDirection getDpadDirection() {
         int value = 0;
-        if (this.dpadAxisMap.size() > 0) {
+        if (!this.dpadAxisMap.isEmpty()) {
             // It's an analog axes d-pad
             BaseAxis xAxis = this.dpadAxisMap.get(AxisID.D_PAD_X);
             if (xAxis != null) {

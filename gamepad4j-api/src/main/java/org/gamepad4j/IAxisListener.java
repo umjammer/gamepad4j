@@ -18,5 +18,5 @@ public interface IAxisListener {
      *
      * @param value The current value of the axis.
      */
-    public void moved(float value);
+    void moved(float value);
 }

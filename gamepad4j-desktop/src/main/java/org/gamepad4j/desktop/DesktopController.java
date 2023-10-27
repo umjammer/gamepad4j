@@ -43,7 +43,7 @@ public class DesktopController extends AbstractBaseController {
     /**
      * Creates a desktop controller holder for a certain code.
      *
-     * @param code The code number of the controller.
+     * @param index The index number of the controller.
      */
     public DesktopController(int index) {
         // For now, create instance with "wrong" device ID 0.
@@ -107,12 +107,11 @@ public class DesktopController extends AbstractBaseController {
     public void createButtons(int numberOfButtons) {
         logger.fine("Create " + numberOfButtons + " buttons for pad...");
 
-        // -----------------------  TODO: Use pooling for button instances ------
+        // TODO Use pooling for button instances
         this.buttons = new BaseButton[numberOfButtons];
         for (int buttonNo = 0; buttonNo < numberOfButtons; buttonNo++) {
             this.buttons[buttonNo] = new BaseButton(this, buttonNo, "", "");
         }
-        // -----------------------------------------------------------------------
 
         for (int buttonNo = 0; buttonNo < numberOfButtons; buttonNo++) {
             String mapping = Mapping.getMapping(this, MappingType.BUTTON, buttonNo);
@@ -132,7 +131,6 @@ public class DesktopController extends AbstractBaseController {
                 if (labelKey != null) {
                     this.buttons[buttonNo].setLabelKey(labelKey);
                 }
-
             }
         }
     }
@@ -146,7 +144,7 @@ public class DesktopController extends AbstractBaseController {
     public void createAxes(int numberOfAxes) {
         logger.fine("Process " + numberOfAxes + " analog axes...");
 
-        // -----------------------  TODO: Use pooling for these ------
+        // TODO Use pooling for these
         this.axes = new BaseAxis[numberOfAxes];
         this.triggers = new BaseTrigger[Mapping.getNumberOfTriggers(this)];
         this.sticks = new BaseStick[Mapping.getNumberOfSticks(this)];

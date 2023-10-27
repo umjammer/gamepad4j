@@ -14,7 +14,7 @@ import javax.swing.ImageIcon;
  * <p>
  * The code of this class was taken from this Java game programming tutorial:
  * <p>
- * http://zetcode.com/tutorials/javagamestutorial/movingsprites/
+ * <a href="http://zetcode.com/tutorials/javagamestutorial/movingsprites/">...</a>
  *
  * @author Marcel Schoen
  * @version $Revision: $

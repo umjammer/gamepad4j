@@ -45,12 +45,8 @@ public class OuyaControllerTrigger extends BaseTrigger {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.base.BaseTrigger#analogValue()
-     */
     @Override
     public float analogValue() {
         return super.analogValue();
     }
-
 }

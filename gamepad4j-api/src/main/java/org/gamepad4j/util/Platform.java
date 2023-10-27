@@ -37,5 +37,5 @@ public enum Platform {
     }
 
     /** Stores the name of the native library file. */
-    private String libraryName;
+    private final String libraryName;
 }

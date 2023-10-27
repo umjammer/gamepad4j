@@ -4,6 +4,7 @@
 
 package org.gamepad4j;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.gamepad4j.util.PlatformUtil;
@@ -45,13 +46,13 @@ public class Controllers implements IControllerListener {
 
         try {
             String providerClassName = "org.gamepad4j." + providerType.toLowerCase() + "." + providerType + "ControllerProvider";
-            Class providerClass = Class.forName(providerClassName);
-            controllerProvider = (IControllerProvider) providerClass.newInstance();
+            Class<?> providerClass = Class.forName(providerClassName);
+            controllerProvider = (IControllerProvider) providerClass.getDeclaredConstructor().newInstance();
             controllerProvider.addListener(instance);
             controllerProvider.initialize();
             logger.fine("Controller provider ready: " + controllerProvider.getClass().getName());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.FINER, e.toString(), e);
             throw new IllegalStateException("Failed to initialize controller provider instance: " + e);
         }
     }

@@ -31,7 +31,6 @@ public interface Gamepad {
     }
 
     interface EventData {
-
     }
 
     class Device implements EventData {
@@ -63,7 +62,6 @@ public interface Gamepad {
         public boolean[] buttonStates;
 
         public interface Private {
-
         }
 
         /**
@@ -91,6 +89,13 @@ public interface Gamepad {
         public int buttonID;
         /** True if button is down */
         public boolean down;
+
+        public ButtonEventData(Device device, double timestamp, int buttonID, boolean down) {
+            this.device = device;
+            this.timestamp = timestamp;
+            this.buttonID = buttonID;
+            this.down = down;
+        }
     }
 
     class AxisEventData implements EventData {
@@ -103,6 +108,13 @@ public interface Gamepad {
         public int axisID;
         /** Axis position value, in the range [-1..1] */
         public float value;
+
+        public AxisEventData(Device device, double timestamp, int axisID, float value) {
+            this.device = device;
+            this.timestamp = timestamp;
+            this.axisID = axisID;
+            this.value = value;
+        }
     }
 
     /**

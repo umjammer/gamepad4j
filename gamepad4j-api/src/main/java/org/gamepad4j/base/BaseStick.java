@@ -39,7 +39,7 @@ public class BaseStick implements IStick {
     /**
      * Creates a stick wrapper.
      *
-     * @param deviceID The deviceID of this stick.
+     * @param ID The deviceID of this stick.
      */
     public BaseStick(StickID ID) {
         this.ID = ID;
@@ -50,8 +50,7 @@ public class BaseStick implements IStick {
     /**
      * Sets the ID and number of an axis for this stick.
      *
-     * @param ID         The ID of the axis.
-     * @param axisNumber The number of the axis.
+     * @param axis The axis.
      */
     public void setAxis(IAxis axis) {
         if (axis.getID() == AxisID.X) {
@@ -63,9 +62,6 @@ public class BaseStick implements IStick {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IStick#getID()
-     */
     @Override
     public StickID getID() {
         return this.ID;
@@ -78,22 +74,17 @@ public class BaseStick implements IStick {
      *
      * @return The stick position data holder.
      */
+    @Override
     public StickPosition getPosition() {
         this.position.update(this.xAxis.getValue(), this.yAxis.getValue());
         return this.position;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IStick#getAxes()
-     */
     @Override
     public IAxis[] getAxes() {
         return this.axes;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IStick#getAxis(org.gamepad4j.util.AxisID)
-     */
     @Override
     public IAxis getAxis(AxisID ID) {
         if (ID == AxisID.X) {
@@ -101,5 +92,4 @@ public class BaseStick implements IStick {
         }
         return this.yAxis;
     }
-
 }

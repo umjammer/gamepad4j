@@ -98,25 +98,16 @@ public class OuyaControllerWrapper extends AbstractBaseController {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IController#getID()
-     */
     @Override
     public int getDeviceID() {
         return this.wrappedController.getDeviceId();
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IController#getSticks()
-     */
     @Override
     public IStick[] getSticks() {
         return this.sticks;
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IController#getStick(org.gamepad4j.util.StickID)
-     */
     @Override
     public IStick getStick(StickID stick) throws IllegalArgumentException {
         if (stick == StickID.LEFT) {
@@ -127,9 +118,6 @@ public class OuyaControllerWrapper extends AbstractBaseController {
         throw new IllegalArgumentException("Stick '" + stick.name() + "' not supported by OUYA controller.");
     }
 
-    /* (non-Javadoc)
-     * @see org.gamepad4j.util.IController#getDpadDirection()
-     */
     @Override
     public DpadDirection getDpadDirection() {
         int direction = 0;

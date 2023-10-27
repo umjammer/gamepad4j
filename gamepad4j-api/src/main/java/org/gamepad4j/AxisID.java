@@ -16,5 +16,5 @@ public enum AxisID {
     Y,
     D_PAD_X,
     D_PAD_Y,
-    TRIGGER;
+    TRIGGER
 }

@@ -50,7 +50,7 @@ public class PlatformUtil {
     /**
      * Check if game runs on OUYA.
      *
-     * @return True if its running on OUYA.
+     * @return True if it's running on OUYA.
      */
     public static boolean isOuya() {
         if (isOuya == null) {
@@ -75,7 +75,7 @@ public class PlatformUtil {
     /**
      * Check if game runs on Win32.
      *
-     * @return True if its running on Windows.
+     * @return True if it's running on Windows.
      */
     public static boolean isWindows() {
         return (OS.contains("win"));
