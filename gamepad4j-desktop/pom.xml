@@ -50,63 +50,6 @@
 							</target>
 						</configuration>
 					</plugin>
-
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>native-maven-plugin</artifactId>
-						<version>1.0-alpha-11</version>
-						<extensions>true</extensions>
-						<configuration>
-							<javahClassNames>
-								<javahClassName>org.gamepad4j.desktop.GamepadJniWrapper</javahClassName>
-							</javahClassNames>
-							<javahSearchJNIFromDependencies>false</javahSearchJNIFromDependencies>
-							<javahOS>darwin</javahOS>
-							<compilerProvider>generic-classic</compilerProvider>
-							<compilerStartOptions>
-								<compilerStartOption>-g -Wall -O2 -fomit-frame-pointer -fPIC</compilerStartOption>
-								<!-- unless locating jdk includes, cause error why??? -->
-								<compilerStartOption>-arch x86_64 -arch arm64
-									-I${java.home}/../include
-									-I${java.home}/../include/darwin
-									-I${project.basedir}/src/main/h/shared
-								</compilerStartOption>
-							</compilerStartOptions>
-							<sources>
-								<source>
-									<directory>src/main/c/macos</directory>
-									<fileNames>
-										<fileName>Gamepad_macosx.c</fileName>
-										<fileName>../shared/Gamepad_private.c</fileName>
-										<fileName>../shared/GamepadJniWrapper.c</fileName>
-									</fileNames>
-								</source>
-							</sources>
-							<linkerStartOptions>
-								<linkerStartOption>-dynamiclib -arch x86_64 -arch arm64 -v
-									-framework IOKit -framework CoreFoundation
-									</linkerStartOption>
-							</linkerStartOptions>
-							<linkerFinalName/>
-						</configuration>
-						<executions>
-							<execution>
-								<id>dylib</id>
-								<phase>compile</phase>
-								<goals>
-									<goal>javah</goal>
-									<goal>compile</goal>
-									<goal>link</goal>
-								</goals>
-								<configuration>
-									<linkerEndOptions>
-										<linkerEndOption>-o ${project.build.outputDirectory}/native/macos/64bit/libgamepad4j.dylib</linkerEndOption>
-									</linkerEndOptions>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-
 				</plugins>
 			</build>
 		</profile>
@@ -154,6 +97,28 @@
       <version>${project.version}</version>
       <artifactId>gamepad4j-api</artifactId>
     </dependency>
+
+		<dependency>
+			<groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+			<artifactId>osx-plugin</artifactId>
+			<version>2.0.12v-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-commons</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>com.github.umjammer</groupId>

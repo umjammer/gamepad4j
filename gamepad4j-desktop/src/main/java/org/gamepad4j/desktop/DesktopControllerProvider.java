@@ -26,23 +26,23 @@ public class DesktopControllerProvider implements IControllerProvider {
     static final Logger logger = Logger.getLogger(DesktopControllerProvider.class.getName());
 
     /** Stores controller listeners. */
-    private ControllerListenerAdapter listeners = new ControllerListenerAdapter();
+    private final ControllerListenerAdapter listeners = new ControllerListenerAdapter();
 
-    public static GamepadJniWrapper jniWrapper = null;
+    public static NativeGamepad nativeGamepad = null;
 
     /** Map of all connected controllers (deviceID / controller). */
-    private static Map<Integer, DesktopController> connected = new HashMap<>();
+    private static final Map<Integer, DesktopController> connected = new HashMap<>();
 
     /** Stores the controllers instance pool. */
-    private static DesktopController[] controllerPool = new DesktopController[16];
+    private static final DesktopController[] controllerPool = new DesktopController[16];
 
     /** Stores the number of connected controllers. */
     private static int numberOfControllers = -1;
 
     @Override
     public void initialize() {
-        jniWrapper = new GamepadJniWrapper();
-        jniWrapper.initialize();
+        nativeGamepad = new NativeGamepad();
+        nativeGamepad.initialize();
         for (int i = 0; i < controllerPool.length; i++) {
             controllerPool[i] = new DesktopController(-1);
         }
@@ -51,8 +51,7 @@ public class DesktopControllerProvider implements IControllerProvider {
 
     @Override
     public void release() {
-        jniWrapper.natRelease();
-        jniWrapper.close();
+        nativeGamepad.close();
     }
 
     /**
@@ -90,25 +89,23 @@ public class DesktopControllerProvider implements IControllerProvider {
 
     @Override
     public synchronized void checkControllers() {
-        jniWrapper.natDetectPads();
+        nativeGamepad.detectPads();
         for (DesktopController controller : connected.values()) {
             controller.setChecked(false);
         }
 
-
-        float value = jniWrapper.natGetControllerAxisState(0, 8);
+        float value = nativeGamepad.getControllerAxisState(0, 8);
         logger.finer(">> Axis 8: " + value);
 
-
         // 1st check which controllers are (still) connected
-        int newNumberOfControllers = jniWrapper.natGetNumberOfPads();
+        int newNumberOfControllers = nativeGamepad.getNumberOfPads();
         if (newNumberOfControllers != numberOfControllers) {
             numberOfControllers = newNumberOfControllers;
             logger.fine("Number of controllers: " + numberOfControllers);
         }
 		logger.finest("Check for newly connected controllers...");
         for (int ct = 0; ct < numberOfControllers; ct++) {
-            int connectedId = jniWrapper.natGetDeviceID(ct);
+            int connectedId = nativeGamepad.getDeviceID(ct);
             if (connectedId != -1) {
                 DesktopController controller = connected.get(connectedId);
                 if (controller != null) {
@@ -119,7 +116,7 @@ public class DesktopControllerProvider implements IControllerProvider {
                         throw new IllegalStateException("** DesktopController instance pool exceeded! **");
                     }
                     newController.setChecked(true);
-                    jniWrapper.updateControllerInfo(newController);
+                    nativeGamepad.updateControllerInfo(newController);
                     DesktopControllerProvider.connected.put(newController.getDeviceID(), newController);
                     logger.info("***********************************************************************");
                     logger.info("Newly connected controller found: " + newController.getDeviceID()
@@ -151,7 +148,7 @@ public class DesktopControllerProvider implements IControllerProvider {
         // 3rd update the state of all remaining controllers
 		logger.finest("Update controllers...");
         for (DesktopController controller : connected.values()) {
-            jniWrapper.updateControllerStatus(controller);
+            nativeGamepad.updateControllerStatus(controller);
         }
     }
 

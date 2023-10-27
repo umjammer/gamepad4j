@@ -7,6 +7,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -60,7 +61,7 @@ public class Board extends JPanel implements ActionListener, Runnable {
         }));
     }
 
-
+    @Override
     public void paint(Graphics g) {
         super.paint(g);
 
@@ -71,15 +72,18 @@ public class Board extends JPanel implements ActionListener, Runnable {
         g.dispose();
     }
 
-
+    @Override
     public void actionPerformed(ActionEvent e) {
         craft.move();
         repaint();
     }
 
+int c = 0;
+
     /**
      * Gamepad state checking loop (equates typical game main loop)
      */
+    @Override
     public void run() {
         while (true) {
 try {
@@ -105,12 +109,12 @@ try {
                     moving = true;
                 }
 
-//Debug.println("controller: " + mainController + ", " + Arrays.toString(mainController.getSticks()));
+Debug.println(Level.FINER, "controller: " + mainController + ", " + Arrays.toString(mainController.getSticks()));
                 IStick leftStick = mainController.getStick(StickID.LEFT);
                 if (leftStick != null) {
                     StickPosition leftStickPosition = leftStick.getPosition();
                     if (!leftStickPosition.isStickCentered()) {
-                        //System.out.println("Stick degree: " + leftStickPosition.getDegree());
+Debug.println("Stick degree: " + leftStickPosition.getDegree());
                     }
                     // Get direction from left analog stick as if it were a digital pad
                     // (no degree / speed calculations here, because I'm too lazy)
@@ -134,7 +138,9 @@ try {
                 }
             }
 } catch (Exception e) {
- Debug.println(e);
+ Debug.printStackTrace(e);
+ c++;
+ assert c < 10 : "too many errors";
 }
         }
     }

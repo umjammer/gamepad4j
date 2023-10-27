@@ -67,7 +67,7 @@ static bool inited = false;
 	((array[(bitIndex) / (sizeof(int) * 8)] >> ((bitIndex) % (sizeof(int) * 8))) & 0x1)
 
 void Gamepad_init() {
-	printf("Gamepad_linux.c: init...\n");
+	printf("Gamepad_linux.c: init...");
 	if (!inited) {
 		pthread_mutexattr_t recursiveLock;
 		pthread_mutexattr_init(&recursiveLock);
@@ -75,13 +75,13 @@ void Gamepad_init() {
 		pthread_mutex_init(&devicesMutex, &recursiveLock);
 		pthread_mutex_init(&eventQueueMutex, &recursiveLock);
 		inited = true;
-		printf("Gamepad_linux.c: initialized\n");
+		printf("Gamepad_linux.c: initialized");
 		Gamepad_detectDevices();
 	}
 }
 
 static void disposeDevice(struct Gamepad_device * device) {
-	printf("Gamepad_linux.c: despose device...\n");
+	printf("Gamepad_linux.c: despose device...");
 	close(((struct Gamepad_devicePrivate *) device->privateData)->fd);
 	free(((struct Gamepad_devicePrivate *) device->privateData)->path);
 	free(device->privateData);
@@ -94,7 +94,7 @@ static void disposeDevice(struct Gamepad_device * device) {
 }
 
 void Gamepad_shutdown() {
-	printf("Gamepad_linux.c: shutdown...\n");
+	printf("Gamepad_linux.c: shutdown...");
 	if (inited) {
 		unsigned int eventIndex;
 		unsigned int devicesLeft;

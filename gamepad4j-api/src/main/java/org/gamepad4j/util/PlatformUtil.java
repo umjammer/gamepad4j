@@ -55,8 +55,9 @@ public class PlatformUtil {
     public static boolean isOuya() {
         if (isOuya == null) {
             try {
-                logger.fine("Create class 'android.os.Build'");
+                logger.finer("checking ouya...");
                 Class<?> buildClass = Class.forName("android.os.Build");
+                logger.fine("Create class 'android.os.Build'");
                 Field deviceField = buildClass.getDeclaredField("DEVICE");
                 Object device = deviceField.get(null);
                 logger.fine("Device Type: '" + device + "'");
@@ -64,10 +65,11 @@ public class PlatformUtil {
                 isOuya = deviceName.contains("ouya");
                 logger.fine("is OUYA: " + isOuya);
             } catch (Exception e) {
+                logger.finer("checking ouya: NO");
                 return false;
             }
         }
-        return isOuya.booleanValue();
+        return isOuya;
     }
 
     /**
@@ -76,7 +78,7 @@ public class PlatformUtil {
      * @return True if its running on Windows.
      */
     public static boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
+        return (OS.contains("win"));
     }
 
     /**
@@ -85,7 +87,7 @@ public class PlatformUtil {
      * @return True if it runs on a Mac.
      */
     public static boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
+        return (OS.contains("mac"));
     }
 
     /**
@@ -94,6 +96,6 @@ public class PlatformUtil {
      * @return True if it runs on a Unix system.
      */
     public static boolean isLinux() {
-        return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
+        return (OS.contains("nix") || OS.contains("nux") || OS.indexOf("aix") > 0);
     }
 }
