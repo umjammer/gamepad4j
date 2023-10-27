@@ -21,21 +21,17 @@
 package org.gamepad4j.macos;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.NativeLongByReference;
-import org.gamepad4j.shared.Gamepad;
+import org.gamepad4j.shared.BaseGamepad;
 import vavix.rococoa.corefoundation.CFArray;
 import vavix.rococoa.corefoundation.CFDictionary;
 import vavix.rococoa.corefoundation.CFIndex;
@@ -74,9 +70,7 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDVendorIDKey;
 /**
  * @author Alex Diener adiener@sacredsoftware.net
  */
-public class MacosxGamepad implements Gamepad {
-
-    private static final Logger logger = Logger.getLogger(MacosxGamepad.class.getName());
+public class MacosxGamepad extends BaseGamepad {
 
     private static class mach_timebase_info {
 
@@ -104,13 +98,6 @@ public class MacosxGamepad implements Gamepad {
         public Pointer /* IOHIDDeviceRef */ deviceRef;
         public List<HIDGamepadAxis> axisElements;
         public List<HIDGamepadButton> buttonElements;
-    }
-
-    private static class QueuedEvent {
-
-        public int deviceID;
-        public EventType eventType;
-        public EventData eventData;
     }
 
     private Pointer /* IOHIDManagerRef */ hidManager = null;
@@ -166,31 +153,9 @@ public class MacosxGamepad implements Gamepad {
         inputEventQueue[inputEventCount++] = queuedEvent;
     }
 
-    /** a cupcell for passing to callback */
-    public static class DeviceContext extends Structure {
-
-        public int id;
-
-        public DeviceContext() {
-        }
-
-        public DeviceContext(Pointer p) {
-            super(p);
-            read();
-        }
-
-        @Override
-        protected List<String> getFieldOrder() {
-            return List.of("id");
-        }
-
-        static int idGenerator = 0;
-        static Map<Integer, Device> map = new HashMap<>();
-    }
-
     /** a callback when a device value changed */
     private void onDeviceValueChanged(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDValueRef */ value) {
-        Device device = DeviceContext.map.get(new DeviceContext(context).id);
+        Device device = DeviceContext.get(context);
 if (device == null) {
  logger.fine("device is null");
  return;
@@ -305,25 +270,25 @@ if (device == null) {
     }
 
     /** */
-    private void onDeviceMatched(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
+    private void onDeviceMatched(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ deviceRef) {
 logger.finer("CHECKPOINT-4.S");
-        Device deviceRecord = new Device();
-        deviceRecord.deviceID = nextDeviceID++;
-        deviceRecord.vendorID = getIntProperty(device, CFSTR(kIOHIDVendorIDKey));
-        deviceRecord.productID = getIntProperty(device, CFSTR(kIOHIDProductIDKey));
-        deviceRecord.numAxes = 0;
-        deviceRecord.numButtons = 0;
+        Device device = new Device();
+        device.deviceID = nextDeviceID++;
+        device.vendorID = getIntProperty(deviceRef, CFSTR(kIOHIDVendorIDKey));
+        device.productID = getIntProperty(deviceRef, CFSTR(kIOHIDProductIDKey));
+        device.numAxes = 0;
+        device.numButtons = 0;
 
         devices = new Device[numDevices + 1];
-        devices[numDevices++] = deviceRecord;
+        devices[numDevices++] = device;
 
         DevicePrivate hidDeviceRecord = new DevicePrivate();
-        hidDeviceRecord.deviceRef = device;
+        hidDeviceRecord.deviceRef = deviceRef;
         hidDeviceRecord.axisElements = new ArrayList<>();
         hidDeviceRecord.buttonElements = new ArrayList<>();
-        deviceRecord.privateData = hidDeviceRecord;
+        device.privateData = hidDeviceRecord;
 
-        CFString cfProductName = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey)).asString();
+        CFString cfProductName = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(deviceRef, CFSTR(kIOHIDProductKey)).asString();
         String description;
         if (cfProductName == null || !CFLib.INSTANCE.CFGetTypeID(cfProductName).equals(CFLib.INSTANCE.CFStringGetTypeID())) {
             description = "[Unknown]";
@@ -335,10 +300,10 @@ logger.finer("CHECKPOINT-4.S");
             CFLib.INSTANCE.CFStringGetBytes(cfProductName, new CFRange(0, CFLib.INSTANCE.CFStringGetLength(cfProductName).intValue()).newByValue(), kCFStringEncodingUTF8, (byte) '?', false, bytes, CFIndex.of(length.getValue().intValue() + 1), null);
             description = new String(bytes, 0, length.getValue().intValue());
         }
-        deviceRecord.description = description;
+        device.description = description;
 logger.finer("CHECKPOINT-4.1: " + description);
 
-        CFArray elements = IOKitLib.INSTANCE.IOHIDDeviceCopyMatchingElements(device, null, kIOHIDOptionsTypeNone);
+        CFArray elements = IOKitLib.INSTANCE.IOHIDDeviceCopyMatchingElements(deviceRef, null, kIOHIDOptionsTypeNone);
         for (int elementIndex = 0; elementIndex < CFLib.INSTANCE.CFArrayGetCount(elements).intValue(); elementIndex++) {
             Pointer /* IOHIDElementRef */ element = CFLib.INSTANCE.CFArrayGetValueAtIndex(elements, elementIndex).getPointer();
             int /* IOHIDElementType */ type = IOKitLib.INSTANCE.IOHIDElementGetType(element);
@@ -355,36 +320,34 @@ logger.finer("CHECKPOINT-4.1: " + description);
                 axisElement.isHatSwitch = IOKitLib.INSTANCE.IOHIDElementGetUsage(element) == kHIDUsage_GD_Hatswitch;
                 axisElement.isHatSwitchSecondAxis = false;
                 hidDeviceRecord.axisElements.add(axisElement);
-                deviceRecord.numAxes++;
+                device.numAxes++;
 
-                if (hidDeviceRecord.axisElements.get(deviceRecord.numAxes - 1).isHatSwitch) {
+                if (hidDeviceRecord.axisElements.get(device.numAxes - 1).isHatSwitch) {
                     axisElement = new HIDGamepadAxis();
                     axisElement.isHatSwitchSecondAxis = true;
                     hidDeviceRecord.axisElements.add(axisElement);
-                    deviceRecord.numAxes++;
+                    device.numAxes++;
                 }
 
             } else if (type == kIOHIDElementTypeInput_Button) {
                 HIDGamepadButton buttonElement = new HIDGamepadButton();
                 buttonElement.cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
                 hidDeviceRecord.buttonElements.add(buttonElement);
-                deviceRecord.numButtons++;
+                device.numButtons++;
             }
         }
         CFLib.INSTANCE.CFRelease(elements);
 
-        deviceRecord.axisStates = new float[deviceRecord.numAxes];
-        deviceRecord.buttonStates = new boolean[deviceRecord.numButtons];
+        device.axisStates = new float[device.numAxes];
+        device.buttonStates = new boolean[device.numButtons];
 
-        DeviceContext deviceContext = new DeviceContext();
-        deviceContext.id = DeviceContext.idGenerator++;
-        DeviceContext.map.put(deviceContext.id, deviceRecord);
-        IOKitLib.INSTANCE.IOHIDDeviceRegisterInputValueCallback(device, this::onDeviceValueChanged, deviceContext.getPointer());
+        DeviceContext deviceContext = DeviceContext.create(device);
+        IOKitLib.INSTANCE.IOHIDDeviceRegisterInputValueCallback(deviceRef, this::onDeviceValueChanged, deviceContext.getPointer());
 
         QueuedEvent queuedEvent = new QueuedEvent();
-        queuedEvent.deviceID = deviceRecord.deviceID;
+        queuedEvent.deviceID = device.deviceID;
         queuedEvent.eventType = DEVICE_ATTACHED;
-        queuedEvent.eventData = deviceRecord;
+        queuedEvent.eventData = device;
 
         if (deviceEventCount >= deviceEventQueueSize) {
             deviceEventQueueSize = deviceEventQueueSize == 0 ? 1 : deviceEventQueueSize * 2;
@@ -442,8 +405,10 @@ logger.fine("onDeviceRemoved: " + device);
         }
     }
 
+    /** */
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    /** */
     private CountDownLatch cdl = new CountDownLatch(1);
 
     @Override
@@ -547,67 +512,6 @@ logger.warning(deviceIndex + " >= " + numDevices);
         return devices[deviceIndex];
     }
 
-    /**  */
-    private final List<GamepadListener> listeners = new ArrayList<>();
-
-    /**  */
-    protected void fireDeviceAttach(Device device) {
-        listeners.forEach(l -> l.deviceAttach(device));
-    }
-
-    /**  */
-    protected void fireDeviceRemove(Device device) {
-        listeners.forEach(l -> l.deviceRemove(device));
-    }
-
-    /**  */
-    protected void fireButtonDown(Device device, int buttonID, double timestamp) {
-        listeners.forEach(l -> l.buttonDown(device, buttonID, timestamp));
-    }
-
-    /**  */
-    protected void fireBbuttonUp(Device device, int buttonID, double timestamp) {
-        listeners.forEach(l -> l.buttonUp(device, buttonID, timestamp));
-    }
-
-    /**  */
-    protected void fireAxisMove(Device device, int axisID, float value, double timestamp) {
-        listeners.forEach(l -> l.axisMove(device, axisID, value, timestamp));
-    }
-
-    /**  */
-    private void processQueuedEvent(QueuedEvent event) {
-if (event == null) {
- logger.finer("event is null");
- return;
-}
-        switch (event.eventType) {
-        case DEVICE_ATTACHED: {
-            fireDeviceAttach((Device) event.eventData);
-            break;
-        }
-        case DEVICE_REMOVED: {
-            fireDeviceRemove((Device) event.eventData);
-            break;
-        }
-        case BUTTON_DOWN: {
-            ButtonEventData buttonEvent = (ButtonEventData) event.eventData;
-            fireButtonDown(buttonEvent.device, buttonEvent.buttonID, buttonEvent.timestamp);
-            break;
-        }
-        case BUTTON_UP: {
-            ButtonEventData buttonEvent = (ButtonEventData) event.eventData;
-            fireBbuttonUp(buttonEvent.device, buttonEvent.buttonID, buttonEvent.timestamp);
-            break;
-        }
-        case AXIS_MOVED: {
-            AxisEventData axisEvent = (AxisEventData) event.eventData;
-            fireAxisMove(axisEvent.device, axisEvent.axisID, axisEvent.value, axisEvent.timestamp);
-            break;
-        }
-        }
-    }
-
     @Override
     public void detectDevices() {
         if (hidManager == null) {
@@ -621,6 +525,7 @@ logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
         deviceEventCount = 0;
     }
 
+    /** */
     private volatile boolean inProcessEvents;
 
     @Override
