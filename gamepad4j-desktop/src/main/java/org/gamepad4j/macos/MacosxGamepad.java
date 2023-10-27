@@ -79,6 +79,7 @@ public class MacosxGamepad implements Gamepad {
     private static final Logger logger = Logger.getLogger(MacosxGamepad.class.getName());
 
     private static class mach_timebase_info {
+
         public long numer;
         public long denom;
     }
@@ -186,6 +187,7 @@ public class MacosxGamepad implements Gamepad {
     }
 
     public static class DeviceContext extends Structure {
+
         public int id;
 
         public DeviceContext() {
@@ -327,9 +329,9 @@ public class MacosxGamepad implements Gamepad {
         return getIntProperty(deviceRef, CFSTR(kIOHIDProductIDKey));
     }
 
-    /** */
+    /**  */
     private void onDeviceMatched(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
-logger.finer("CHECKPOINT-4.S");
+        logger.finer("CHECKPOINT-4.S");
         Device deviceRecord = new Device();
         deviceRecord.deviceID = nextDeviceID++;
         deviceRecord.vendorID = getVendorID(device);
@@ -359,7 +361,7 @@ logger.finer("CHECKPOINT-4.S");
             description = new String(bytes, 0, length.getValue().intValue());
         }
         deviceRecord.description = description;
-logger.finer("CHECKPOINT-4.1: " + description);
+        logger.finer("CHECKPOINT-4.1: " + description);
 
         CFArray elements = IOKitLib.INSTANCE.IOHIDDeviceCopyMatchingElements(device, null, kIOHIDOptionsTypeNone);
         for (int elementIndex = 0; elementIndex < CFLib.INSTANCE.CFArrayGetCount(elements).intValue(); elementIndex++) {
@@ -414,10 +416,10 @@ logger.finer("CHECKPOINT-4.1: " + description);
             deviceEventQueue = new QueuedEvent[deviceEventQueueSize];
         }
         deviceEventQueue[deviceEventCount++] = queuedEvent;
-logger.finer("CHECKPOINT-4.E");
+        logger.finer("CHECKPOINT-4.E");
     }
 
-    /** */
+    /**  */
     private void disposeDevice(Device deviceRecord) {
         int inputEventIndex, deviceEventIndex;
 
@@ -448,11 +450,11 @@ logger.finer("CHECKPOINT-4.E");
         }
     }
 
-    /** */
+    /**  */
     private void onDeviceRemoved(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
-logger.fine("onDeviceRemoved: " + device);
+        logger.fine("onDeviceRemoved: " + device);
         for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
-            if (((DevicePrivate) devices[deviceIndex].privateData).deviceRef == device){
+            if (((DevicePrivate) devices[deviceIndex].privateData).deviceRef == device) {
                 fireDeviceRemove(devices[deviceIndex]);
 
                 disposeDevice(devices[deviceIndex]);
@@ -472,12 +474,15 @@ logger.fine("onDeviceRemoved: " + device);
     @Override
     public void init() {
         executorService.submit(this::initInternal);
-        try { cdl.await(); } catch (InterruptedException ignore) {}
+        try {
+            cdl.await();
+        } catch (InterruptedException ignore) {
+        }
     }
 
     private void initInternal() {
         if (hidManager == null) {
-logger.finer("CHECKPOINT-0.S");
+            logger.finer("CHECKPOINT-0.S");
             hidManager = IOKitLib.INSTANCE.IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerScheduleWithRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -529,17 +534,17 @@ logger.finer("CHECKPOINT-0.S");
             IOKitLib.INSTANCE.IOHIDManagerRegisterDeviceRemovalCallback(hidManager, this::onDeviceRemoved, null);
 
             cdl.countDown();
-logger.fine("CHECKPOINT-0.8: bye...");
+            logger.fine("CHECKPOINT-0.8: bye...");
 
             CFLib.INSTANCE.CFRunLoopRun();
-logger.fine("CHECKPOINT-0.E");
+            logger.fine("CHECKPOINT-0.E");
         }
     }
 
     @Override
     public void shutdown() {
         executorService.shutdownNow();
-logger.fine("i am a mac, bye");
+        logger.fine("i am a mac, bye");
 
         if (hidManager != null) {
             IOKitLib.INSTANCE.IOHIDManagerUnscheduleFromRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -557,53 +562,53 @@ logger.fine("i am a mac, bye");
 
     @Override
     public int numDevices() {
-logger.finer("CHECKPOINT-3.0");
+        logger.finer("CHECKPOINT-3.0");
         return numDevices;
     }
 
     @Override
     public Device deviceAtIndex(int deviceIndex) {
         if (deviceIndex >= numDevices) {
-logger.warning(deviceIndex + " >= " + numDevices);
+            logger.warning(deviceIndex + " >= " + numDevices);
             return null;
         }
         return devices[deviceIndex];
     }
 
-    /** */
+    /**  */
     private final List<GamepadListener> listeners = new ArrayList<>();
 
-    /** */
+    /**  */
     protected void fireDeviceAttach(Device device) {
         listeners.forEach(l -> l.deviceAttach(device));
     }
 
-    /** */
+    /**  */
     protected void fireDeviceRemove(Device device) {
         listeners.forEach(l -> l.deviceRemove(device));
     }
 
-    /** */
+    /**  */
     protected void fireButtonDown(Device device, int buttonID, double timestamp) {
         listeners.forEach(l -> l.buttonDown(device, buttonID, timestamp));
     }
 
-    /** */
+    /**  */
     protected void fireBbuttonUp(Device device, int buttonID, double timestamp) {
         listeners.forEach(l -> l.buttonUp(device, buttonID, timestamp));
     }
 
-    /** */
+    /**  */
     protected void fireAxisMove(Device device, int axisID, float value, double timestamp) {
         listeners.forEach(l -> l.axisMove(device, axisID, value, timestamp));
     }
 
-    /** */
+    /**  */
     private void processQueuedEvent(QueuedEvent event) {
-if (event == null) {
- logger.finer("event is null");
- return;
-}
+        if (event == null) {
+            logger.finer("event is null");
+            return;
+        }
         switch (event.eventType) {
         case DEVICE_ATTACHED: {
             fireDeviceAttach((Device) event.eventData);
@@ -634,10 +639,10 @@ if (event == null) {
     @Override
     public void detectDevices() {
         if (hidManager == null) {
-logger.fine("detectDevices: hidManager is null");
+            logger.fine("detectDevices: hidManager is null");
             return;
         }
-logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
+        logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
         for (int eventIndex = 0; eventIndex < deviceEventCount; eventIndex++) {
             processQueuedEvent(deviceEventQueue[eventIndex]);
         }
@@ -650,18 +655,18 @@ logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
     public void processEvents() {
         int eventIndex;
 
-logger.finer("CHECKPOINT-7.0");
+        logger.finer("CHECKPOINT-7.0");
         if (hidManager == null || inProcessEvents) {
             return;
         }
 
-logger.finer("CHECKPOINT-7.1");
+        logger.finer("CHECKPOINT-7.1");
         inProcessEvents = true;
         for (eventIndex = 0; eventIndex < inputEventCount; eventIndex++) {
             processQueuedEvent(inputEventQueue[eventIndex]);
         }
         inputEventCount = 0;
         inProcessEvents = false;
-logger.finer("CHECKPOINT-7.2");
+        logger.finer("CHECKPOINT-7.2");
     }
 }

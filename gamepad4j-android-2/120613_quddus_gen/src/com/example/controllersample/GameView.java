@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+
 /*
  * A trivial joystick based physics game to demonstrate joystick handling. If
  * the game controller has a vibrator, then it is used to provide feedback when
@@ -50,6 +51,7 @@ import java.util.Random;
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GameView extends View implements InputDeviceListener {
+
     private static final int MAX_OBSTACLES = 12;
 
     private static final int DPAD_STATE_LEFT = 1 << 0;
@@ -395,22 +397,22 @@ public class GameView extends View implements InputDeviceListener {
             float positionX, positionY;
             int edge = mRandom.nextInt(4);
             switch (edge) {
-                case 0:
-                    positionX = -size;
-                    positionY = mRandom.nextInt(getHeight());
-                    break;
-                case 1:
-                    positionX = getWidth() + size;
-                    positionY = mRandom.nextInt(getHeight());
-                    break;
-                case 2:
-                    positionX = mRandom.nextInt(getWidth());
-                    positionY = -size;
-                    break;
-                default:
-                    positionX = mRandom.nextInt(getWidth());
-                    positionY = getHeight() + size;
-                    break;
+            case 0:
+                positionX = -size;
+                positionY = mRandom.nextInt(getHeight());
+                break;
+            case 1:
+                positionX = getWidth() + size;
+                positionY = mRandom.nextInt(getHeight());
+                break;
+            case 2:
+                positionX = mRandom.nextInt(getWidth());
+                positionY = -size;
+                break;
+            default:
+                positionX = mRandom.nextInt(getWidth());
+                positionY = getHeight() + size;
+                break;
             }
             boolean positionSafe = true;
 
@@ -456,14 +458,14 @@ public class GameView extends View implements InputDeviceListener {
     }
 
     private static void setPaintARGBBlend(Paint paint, float alpha,
-            int a1, int r1, int g1, int b1,
-            int a2, int r2, int g2, int b2) {
+                                          int a1, int r1, int g1, int b1,
+                                          int a2, int r2, int g2, int b2) {
         paint.setARGB(blend(alpha, a1, a2), blend(alpha, r1, r2),
                 blend(alpha, g1, g2), blend(alpha, b1, b2));
     }
 
     private static float getCenteredAxis(MotionEvent event, InputDevice device,
-            int axis, int historyPos) {
+                                         int axis, int historyPos) {
         final InputDevice.MotionRange range = device.getMotionRange(axis, event.getSource());
         if (range != null) {
             final float flat = range.getFlat();
@@ -495,6 +497,7 @@ public class GameView extends View implements InputDeviceListener {
     }
 
     private abstract class Sprite {
+
         protected float mPositionX;
         protected float mPositionY;
         protected float mVelocityX;
@@ -529,7 +532,7 @@ public class GameView extends View implements InputDeviceListener {
             // Really bad collision detection.
             return !mDestroyed && !other.mDestroyed
                     && distanceTo(other) <= Math.max(mSize, other.mSize)
-                            + Math.min(mSize, other.mSize) * 0.5f;
+                    + Math.min(mSize, other.mSize) * 0.5f;
         }
 
         public boolean isDestroyed() {
@@ -637,6 +640,7 @@ public class GameView extends View implements InputDeviceListener {
     };
 
     private class Ship extends Sprite {
+
         private static final float CORNER_ANGLE = (float) Math.PI * 2 / 3;
         private static final float TO_DEGREES = (float) (180.0 / Math.PI);
 
@@ -697,31 +701,31 @@ public class GameView extends View implements InputDeviceListener {
             // Handle keys going up.
             boolean handled = false;
             switch (keyCode) {
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    setHeadingX(0);
-                    mDPadState &= ~DPAD_STATE_LEFT;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                setHeadingX(0);
+                mDPadState &= ~DPAD_STATE_LEFT;
+                handled = true;
+                break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                setHeadingX(0);
+                mDPadState &= ~DPAD_STATE_RIGHT;
+                handled = true;
+                break;
+            case KeyEvent.KEYCODE_DPAD_UP:
+                setHeadingY(0);
+                mDPadState &= ~DPAD_STATE_UP;
+                handled = true;
+                break;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                setHeadingY(0);
+                mDPadState &= ~DPAD_STATE_DOWN;
+                handled = true;
+                break;
+            default:
+                if (isFireKey(keyCode)) {
                     handled = true;
-                    break;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    setHeadingX(0);
-                    mDPadState &= ~DPAD_STATE_RIGHT;
-                    handled = true;
-                    break;
-                case KeyEvent.KEYCODE_DPAD_UP:
-                    setHeadingY(0);
-                    mDPadState &= ~DPAD_STATE_UP;
-                    handled = true;
-                    break;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                    setHeadingY(0);
-                    mDPadState &= ~DPAD_STATE_DOWN;
-                    handled = true;
-                    break;
-                default:
-                    if (isFireKey(keyCode)) {
-                        handled = true;
-                    }
-                    break;
+                }
+                break;
             }
             return handled;
         }
@@ -748,32 +752,32 @@ public class GameView extends View implements InputDeviceListener {
             boolean handled = false;
             if (event.getRepeatCount() == 0) {
                 switch (keyCode) {
-                    case KeyEvent.KEYCODE_DPAD_LEFT:
-                        setHeadingX(-1);
-                        mDPadState |= DPAD_STATE_LEFT;
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    setHeadingX(-1);
+                    mDPadState |= DPAD_STATE_LEFT;
+                    handled = true;
+                    break;
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    setHeadingX(1);
+                    mDPadState |= DPAD_STATE_RIGHT;
+                    handled = true;
+                    break;
+                case KeyEvent.KEYCODE_DPAD_UP:
+                    setHeadingY(-1);
+                    mDPadState |= DPAD_STATE_UP;
+                    handled = true;
+                    break;
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    setHeadingY(1);
+                    mDPadState |= DPAD_STATE_DOWN;
+                    handled = true;
+                    break;
+                default:
+                    if (isFireKey(keyCode)) {
+                        fire();
                         handled = true;
-                        break;
-                    case KeyEvent.KEYCODE_DPAD_RIGHT:
-                        setHeadingX(1);
-                        mDPadState |= DPAD_STATE_RIGHT;
-                        handled = true;
-                        break;
-                    case KeyEvent.KEYCODE_DPAD_UP:
-                        setHeadingY(-1);
-                        mDPadState |= DPAD_STATE_UP;
-                        handled = true;
-                        break;
-                    case KeyEvent.KEYCODE_DPAD_DOWN:
-                        setHeadingY(1);
-                        mDPadState |= DPAD_STATE_DOWN;
-                        handled = true;
-                        break;
-                    default:
-                        if (isFireKey(keyCode)) {
-                            fire();
-                            handled = true;
-                        }
-                        break;
+                    }
+                    break;
                 }
             }
             return handled;
@@ -785,7 +789,7 @@ public class GameView extends View implements InputDeviceListener {
          * is not present, but we don't choose to do it in this case.
          *
          * @return the Vibrator for the controller, or null if it is not
-         *         present. or the API level cannot support it
+         * present. or the API level cannot support it
          */
         @SuppressLint("NewApi")
         private final Vibrator getVibrator() {
@@ -944,7 +948,7 @@ public class GameView extends View implements InputDeviceListener {
          * Gets the initial x coordinate for the bullet.
          *
          * @return the x coordinate of the bullet adjusted for the position and
-         *         direction of the ship
+         * direction of the ship
          */
         public float getBulletInitialX() {
             return mPositionX + polarX(mSize);
@@ -954,7 +958,7 @@ public class GameView extends View implements InputDeviceListener {
          * Gets the initial y coordinate for the bullet.
          *
          * @return the y coordinate of the bullet adjusted for the position and
-         *         direction of the ship
+         * direction of the ship
          */
         public float getBulletInitialY() {
             return mPositionY + polarY(mSize);
@@ -964,7 +968,7 @@ public class GameView extends View implements InputDeviceListener {
          * Returns the bullet speed Y component.
          *
          * @return adjusted Y component bullet speed for the velocity and
-         *         direction of the ship
+         * direction of the ship
          */
         public float getBulletVelocityY() {
             return mVelocityY + polarY(mBulletSpeed);
@@ -974,7 +978,7 @@ public class GameView extends View implements InputDeviceListener {
          * Returns the bullet speed X component
          *
          * @return adjusted X component bullet speed for the velocity and
-         *         direction of the ship
+         * direction of the ship
          */
         public float getBulletVelocityX() {
             return mVelocityX + polarX(mBulletSpeed);
@@ -1044,6 +1048,7 @@ public class GameView extends View implements InputDeviceListener {
     }
 
     private static final Paint mBulletPaint;
+
     static {
         mBulletPaint = new Paint();
         mBulletPaint.setStyle(Style.FILL);
@@ -1084,6 +1089,7 @@ public class GameView extends View implements InputDeviceListener {
     }
 
     private static final Paint mObstaclePaint;
+
     static {
         mObstaclePaint = new Paint();
         mObstaclePaint.setARGB(255, 127, 127, 255);

@@ -113,7 +113,7 @@ public class NativeGamepad {
      */
     public int getDeviceID(int index) {
         Device device = gamepad.deviceAtIndex(index);
-        if(device == null) {
+        if (device == null) {
             return -1;
         }
         return device.deviceID;
@@ -175,7 +175,7 @@ public class NativeGamepad {
     /**
      * Forces detection of connected gamepads.
      */
-    public void detectPads()  {
+    public void detectPads() {
         gamepad.detectDevices();
         // The following call is required on Windows
         gamepad.processEvents();
@@ -219,7 +219,7 @@ public class NativeGamepad {
      * @param stateArray An array where every entry represents a button, and if it's
      *                   TRUE, the button is pressed.
      */
-    public void getControllerButtonStates(int index, boolean[] stateArray){
+    public void getControllerButtonStates(int index, boolean[] stateArray) {
         Gamepad.Device device = gamepad.deviceAtIndex(index);
         if (device == null) {
             return;
@@ -250,7 +250,7 @@ public class NativeGamepad {
      * @param index       The code of the controller.
      * @param buttonIndex The code of the button.
      */
-    public boolean getControllerButtonState(int index, int buttonIndex){
+    public boolean getControllerButtonState(int index, int buttonIndex) {
         Gamepad.Device device = gamepad.deviceAtIndex(index);
         if (device == null) {
             return false;
@@ -264,7 +264,7 @@ public class NativeGamepad {
      * @param index     The code of the controller.
      * @param axisIndex The code of the axis.
      */
-    public float getControllerAxisState(int index, int axisIndex){
+    public float getControllerAxisState(int index, int axisIndex) {
         Gamepad.Device device = gamepad.deviceAtIndex(index);
         if (device == null) {
             logger.warning("ERROR: Can't update axis of device: " + index);

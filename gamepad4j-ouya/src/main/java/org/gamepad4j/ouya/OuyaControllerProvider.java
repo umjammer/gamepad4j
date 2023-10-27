@@ -14,6 +14,7 @@ import org.gamepad4j.IControllerProvider;
 
 import tv.ouya.console.api.OuyaController;
 
+
 /**
  * Provides controller instances on OUYA.
  *
@@ -21,95 +22,95 @@ import tv.ouya.console.api.OuyaController;
  * @version $Revision: $
  */
 public class OuyaControllerProvider implements IControllerProvider {
-	
-	private static final int MAX_CONTROLLERS = 8;
-	
-	/** Stores controller listeners. */
-	private ControllerListenerAdapter listeners = new ControllerListenerAdapter();
 
-	/** Map of all connected OUYA controllers. */
-	private Map<OuyaController, OuyaControllerWrapper> connected = new HashMap<OuyaController, OuyaControllerWrapper>();
-	
-	/* (non-Javadoc)
-	 * @see org.gamepad4j.util.IControllerProvider#initialize()
-	 */
-	@Override
-	public void initialize() {
-		System.out.println("OUYA controller provider ready.");
-		updateControllers();
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see org.gamepad4j.util.IControllerProvider#release()
-	 */
-	@Override
-	public void release() {
-		// do nothing
-	}
+    private static final int MAX_CONTROLLERS = 8;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.gamepad4j.util.IControllerProvider#checkControllers()
-	 */
-	@Override
-	public void checkControllers() {
-		boolean update = false;
-		for(int ct = 0; ct < MAX_CONTROLLERS; ct++) {
-			if(OuyaController.getControllerByPlayer(ct) != null) {
-				if(connected.get(OuyaController.getControllerByPlayer(ct)) == null) {
-					// Newly connected controller found
-					update = true;
-					System.out.println("Newly connected OUYA controller found.");
-				}
-			}
-		}
-		if(update) {
-			updateControllers();
-		}
-		// Now update the button and axes states
-		for(int ct = 0; ct < MAX_CONTROLLERS; ct++) {
-			if(OuyaController.getControllerByPlayer(ct) != null) {
-				OuyaController ouyaController = OuyaController.getControllerByPlayer(ct);
-				OuyaControllerWrapper wrapper = this.connected.get(ouyaController);
-				wrapper.updateValues();
-			}
-		}
-	}
+    /** Stores controller listeners. */
+    private ControllerListenerAdapter listeners = new ControllerListenerAdapter();
 
-	/**
-	 * Updates the array of controllers. Invoke only when
-	 * an update is really necessary (because this method creates new
-	 * wrapper objects and changes the map of controllers).
-	 */
-	private void updateControllers() {
-		this.connected.clear();
-		for(int ct = 0; ct < MAX_CONTROLLERS; ct++) {
-			if(OuyaController.getControllerByPlayer(ct) != null) {
-				OuyaController ouyaController = OuyaController.getControllerByPlayer(ct);
-				OuyaControllerWrapper controller = new OuyaControllerWrapper(ouyaController);
-				this.connected.put(ouyaController, controller);
-				for(IControllerListener listener : this.listeners.getListeners()) {
-					listener.connected(controller);
-				}
-			}
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.gamepad4j.util.IControllerProvider#addListener(org.gamepad4j.util.IControllerListener)
-	 */
-	@Override
-	public void addListener(IControllerListener listener) {
-		this.listeners.addListener(listener);
-	}
+    /** Map of all connected OUYA controllers. */
+    private Map<OuyaController, OuyaControllerWrapper> connected = new HashMap<OuyaController, OuyaControllerWrapper>();
 
-	/* (non-Javadoc)
-	 * @see org.gamepad4j.util.IControllerProvider#removeListener(org.gamepad4j.util.IControllerListener)
-	 */
-	@Override
-	public void removeListener(IControllerListener listener) {
-		this.listeners.removeListener(listener);
-	}
+    /* (non-Javadoc)
+     * @see org.gamepad4j.util.IControllerProvider#initialize()
+     */
+    @Override
+    public void initialize() {
+        System.out.println("OUYA controller provider ready.");
+        updateControllers();
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.gamepad4j.util.IControllerProvider#release()
+     */
+    @Override
+    public void release() {
+        // do nothing
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.gamepad4j.util.IControllerProvider#checkControllers()
+     */
+    @Override
+    public void checkControllers() {
+        boolean update = false;
+        for (int ct = 0; ct < MAX_CONTROLLERS; ct++) {
+            if (OuyaController.getControllerByPlayer(ct) != null) {
+                if (connected.get(OuyaController.getControllerByPlayer(ct)) == null) {
+                    // Newly connected controller found
+                    update = true;
+                    System.out.println("Newly connected OUYA controller found.");
+                }
+            }
+        }
+        if (update) {
+            updateControllers();
+        }
+        // Now update the button and axes states
+        for (int ct = 0; ct < MAX_CONTROLLERS; ct++) {
+            if (OuyaController.getControllerByPlayer(ct) != null) {
+                OuyaController ouyaController = OuyaController.getControllerByPlayer(ct);
+                OuyaControllerWrapper wrapper = this.connected.get(ouyaController);
+                wrapper.updateValues();
+            }
+        }
+    }
+
+    /**
+     * Updates the array of controllers. Invoke only when
+     * an update is really necessary (because this method creates new
+     * wrapper objects and changes the map of controllers).
+     */
+    private void updateControllers() {
+        this.connected.clear();
+        for (int ct = 0; ct < MAX_CONTROLLERS; ct++) {
+            if (OuyaController.getControllerByPlayer(ct) != null) {
+                OuyaController ouyaController = OuyaController.getControllerByPlayer(ct);
+                OuyaControllerWrapper controller = new OuyaControllerWrapper(ouyaController);
+                this.connected.put(ouyaController, controller);
+                for (IControllerListener listener : this.listeners.getListeners()) {
+                    listener.connected(controller);
+                }
+            }
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.gamepad4j.util.IControllerProvider#addListener(org.gamepad4j.util.IControllerListener)
+     */
+    @Override
+    public void addListener(IControllerListener listener) {
+        this.listeners.addListener(listener);
+    }
+
+    /* (non-Javadoc)
+     * @see org.gamepad4j.util.IControllerProvider#removeListener(org.gamepad4j.util.IControllerListener)
+     */
+    @Override
+    public void removeListener(IControllerListener listener) {
+        this.listeners.removeListener(listener);
+    }
 
 }

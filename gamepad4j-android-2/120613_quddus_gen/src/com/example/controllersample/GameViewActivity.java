@@ -19,6 +19,7 @@ package com.example.controllersample;
 import android.app.Activity;
 import android.os.Bundle;
 
+
 public class GameViewActivity extends Activity {
 
     @Override

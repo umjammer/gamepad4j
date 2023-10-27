@@ -22,7 +22,9 @@ import android.os.Handler;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
+
 public interface InputManagerCompat {
+
     /**
      * Gets information about the input device with the specified id.
      *
@@ -43,12 +45,12 @@ public interface InputManagerCompat {
      * input devices are added, removed or changed.
      *
      * @param listener The listener to register.
-     * @param handler The handler on which the listener should be invoked, or
-     *            null if the listener should be invoked on the calling thread's
-     *            looper.
+     * @param handler  The handler on which the listener should be invoked, or
+     *                 null if the listener should be invoked on the calling thread's
+     *                 looper.
      */
     public void registerInputDeviceListener(InputManagerCompat.InputDeviceListener listener,
-            Handler handler);
+                                            Handler handler);
 
     /**
      * Unregisters an input device listener.
@@ -89,6 +91,7 @@ public interface InputManagerCompat {
     public void onResume();
 
     public interface InputDeviceListener {
+
         /**
          * Called whenever the input manager detects that a device has been
          * added. This will only be called in the V9 version when a motion event
@@ -126,7 +129,7 @@ public interface InputManagerCompat {
          * Constructs and returns a compatible InputManger
          *
          * @param context the Context that will be used to get the system
-         *            service from
+         *                service from
          * @return a compatible implementation of InputManager
          */
         public static InputManagerCompat getInputManager(Context context) {

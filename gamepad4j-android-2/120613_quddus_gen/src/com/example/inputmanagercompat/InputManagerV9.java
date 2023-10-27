@@ -30,7 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
+
 public class InputManagerV9 implements InputManagerCompat {
+
     private static final String LOG_TAG = "InputManagerV9";
     private static final int MESSAGE_TEST_FOR_DISCONNECT = 101;
     private static final long CHECK_ELAPSED_TIME = 3000L;
@@ -44,6 +46,7 @@ public class InputManagerV9 implements InputManagerCompat {
     private final Handler mDefaultHandler;
 
     private static class PollingMessageHandler extends Handler {
+
         private final WeakReference<InputManagerV9> mInputManager;
 
         PollingMessageHandler(InputManagerV9 im) {
@@ -54,32 +57,32 @@ public class InputManagerV9 implements InputManagerCompat {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case MESSAGE_TEST_FOR_DISCONNECT:
-                    InputManagerV9 imv = mInputManager.get();
-                    if (null != imv) {
-                        long time = SystemClock.elapsedRealtime();
-                        int size = imv.mDevices.size();
-                        for (int i = 0; i < size; i++) {
-                            long[] lastContact = imv.mDevices.valueAt(i);
-                            if (null != lastContact) {
-                                if (time - lastContact[0] > CHECK_ELAPSED_TIME) {
-                                    // check to see if the device has been
-                                    // disconnected
-                                    int id = imv.mDevices.keyAt(i);
-                                    if (null == InputDevice.getDevice(id)) {
-                                        // disconnected!
-                                        imv.notifyListeners(ON_DEVICE_REMOVED, id);
-                                        imv.mDevices.remove(id);
-                                    } else {
-                                        lastContact[0] = time;
-                                    }
+            case MESSAGE_TEST_FOR_DISCONNECT:
+                InputManagerV9 imv = mInputManager.get();
+                if (null != imv) {
+                    long time = SystemClock.elapsedRealtime();
+                    int size = imv.mDevices.size();
+                    for (int i = 0; i < size; i++) {
+                        long[] lastContact = imv.mDevices.valueAt(i);
+                        if (null != lastContact) {
+                            if (time - lastContact[0] > CHECK_ELAPSED_TIME) {
+                                // check to see if the device has been
+                                // disconnected
+                                int id = imv.mDevices.keyAt(i);
+                                if (null == InputDevice.getDevice(id)) {
+                                    // disconnected!
+                                    imv.notifyListeners(ON_DEVICE_REMOVED, id);
+                                    imv.mDevices.remove(id);
+                                } else {
+                                    lastContact[0] = time;
                                 }
                             }
                         }
-                        sendEmptyMessageDelayed(MESSAGE_TEST_FOR_DISCONNECT,
-                                CHECK_ELAPSED_TIME);
                     }
-                    break;
+                    sendEmptyMessageDelayed(MESSAGE_TEST_FOR_DISCONNECT,
+                            CHECK_ELAPSED_TIME);
+                }
+                break;
             }
         }
 
@@ -105,11 +108,11 @@ public class InputManagerV9 implements InputManagerCompat {
         // collection of watched input devices
         int[] activeDevices = InputDevice.getDeviceIds();
         long time = SystemClock.elapsedRealtime();
-        for ( int id : activeDevices ) {
+        for (int id : activeDevices) {
             long[] lastContact = mDevices.get(id);
-            if ( null == lastContact ) {
+            if (null == lastContact) {
                 // we have a new device
-                mDevices.put(id, new long[] { time });
+                mDevices.put(id, new long[] {time});
             }
         }
         return activeDevices;
@@ -143,6 +146,7 @@ public class InputManagerV9 implements InputManagerCompat {
     }
 
     private static class DeviceEvent implements Runnable {
+
         private int mMessageType;
         private int mId;
         private InputDeviceListener mListener;
@@ -152,7 +156,7 @@ public class InputManagerV9 implements InputManagerCompat {
         }
 
         static DeviceEvent getDeviceEvent(int messageType, int id,
-                InputDeviceListener listener) {
+                                          InputDeviceListener listener) {
             DeviceEvent curChanged = sEventQueue.poll();
             if (null == curChanged) {
                 curChanged = new DeviceEvent();
@@ -166,18 +170,18 @@ public class InputManagerV9 implements InputManagerCompat {
         @Override
         public void run() {
             switch (mMessageType) {
-                case ON_DEVICE_ADDED:
-                    mListener.onInputDeviceAdded(mId);
-                    break;
-                case ON_DEVICE_CHANGED:
-                    mListener.onInputDeviceChanged(mId);
-                    break;
-                case ON_DEVICE_REMOVED:
-                    mListener.onInputDeviceRemoved(mId);
-                    break;
-                default:
-                    Log.e(LOG_TAG, "Unknown Message Type");
-                    break;
+            case ON_DEVICE_ADDED:
+                mListener.onInputDeviceAdded(mId);
+                break;
+            case ON_DEVICE_CHANGED:
+                mListener.onInputDeviceChanged(mId);
+                break;
+            case ON_DEVICE_REMOVED:
+                mListener.onInputDeviceRemoved(mId);
+                break;
+            default:
+                Log.e(LOG_TAG, "Unknown Message Type");
+                break;
             }
             // dump this runnable back in the queue
             sEventQueue.offer(this);

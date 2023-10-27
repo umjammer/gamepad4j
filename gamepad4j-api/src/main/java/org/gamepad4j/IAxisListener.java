@@ -12,11 +12,11 @@ package org.gamepad4j;
  */
 public interface IAxisListener {
 
-	/**
-	 * Whenever the axis value changes, this method is called on
-	 * the listeners.
-	 * 
-	 * @param value The current value of the axis.
-	 */
-	public void moved(float value);
+    /**
+     * Whenever the axis value changes, this method is called on
+     * the listeners.
+     *
+     * @param value The current value of the axis.
+     */
+    public void moved(float value);
 }

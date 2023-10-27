@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
  */
 public class ControllerListenerAdapterTest {
 
-	@Test
-	public void testAdapter() throws Exception {
-	}
+    @Test
+    public void testAdapter() throws Exception {
+    }
 }

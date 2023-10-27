@@ -103,7 +103,7 @@ public class DesktopControllerProvider implements IControllerProvider {
             numberOfControllers = newNumberOfControllers;
             logger.fine("Number of controllers: " + numberOfControllers);
         }
-		logger.finest("Check for newly connected controllers...");
+        logger.finest("Check for newly connected controllers...");
         for (int ct = 0; ct < numberOfControllers; ct++) {
             int connectedId = nativeGamepad.getDeviceID(ct);
             if (connectedId != -1) {
@@ -130,7 +130,7 @@ public class DesktopControllerProvider implements IControllerProvider {
         }
 
         // 2nd remove the controllers not found in the first loop
-		logger.finest("Check for disconnected controllers...");
+        logger.finest("Check for disconnected controllers...");
         Iterator<Entry<Integer, DesktopController>> iter = connected.entrySet().iterator();
         while (iter.hasNext()) {
             Entry<Integer, DesktopController> entry = iter.next();
@@ -146,7 +146,7 @@ public class DesktopControllerProvider implements IControllerProvider {
         }
 
         // 3rd update the state of all remaining controllers
-		logger.finest("Update controllers...");
+        logger.finest("Update controllers...");
         for (DesktopController controller : connected.values()) {
             nativeGamepad.updateControllerStatus(controller);
         }

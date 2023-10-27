@@ -6,20 +6,17 @@ package org.gamepad4j.desktop.tool;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.logging.Logger;
-
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import jogamp.common.Debug;
 import org.gamepad4j.IAxis;
 import org.gamepad4j.IController;
+
 
 /**
  * Panel which shows the status of one gamepad.
@@ -29,54 +26,54 @@ import org.gamepad4j.IController;
  */
 public class ControllerPanel extends JPanel {
 
-	private static final Logger logger = Logger.getLogger(ControllerPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(ControllerPanel.class.getName());
 
-	public ControllerPanel(IController controller) {
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    public ControllerPanel(IController controller) {
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 //	    setBorder(BorderFactory.createLineBorder(Color.GREEN));
 //	    setBorder(BorderFactory.createLoweredBevelBorder());
 //	    setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
 
-		ImageIcon padImage = MappingToolWindow.padImageMap.get(controller.getDeviceTypeIdentifier());
-		if(padImage == null) {
-			padImage = MappingToolWindow.padImageMap.get(0L);
-		}
-		int mainPanelWidth = padImage.getIconWidth();
-		int mainPanelHeight = padImage.getIconHeight();
-		JPanel imagePanel = new JPanel();
-		JLabel label = new JLabel(padImage, JLabel.CENTER);
-		imagePanel.add(label);
-		imagePanel.setPreferredSize(new Dimension(mainPanelWidth, mainPanelHeight));
-		add(imagePanel);
+        ImageIcon padImage = MappingToolWindow.padImageMap.get(controller.getDeviceTypeIdentifier());
+        if (padImage == null) {
+            padImage = MappingToolWindow.padImageMap.get(0L);
+        }
+        int mainPanelWidth = padImage.getIconWidth();
+        int mainPanelHeight = padImage.getIconHeight();
+        JPanel imagePanel = new JPanel();
+        JLabel label = new JLabel(padImage, JLabel.CENTER);
+        imagePanel.add(label);
+        imagePanel.setPreferredSize(new Dimension(mainPanelWidth, mainPanelHeight));
+        add(imagePanel);
 
-		JLabel axisLabel = new JLabel("Axes");
-		add(axisLabel);
+        JLabel axisLabel = new JLabel("Axes");
+        add(axisLabel);
 
-		IAxis[] axes = controller.getAxes();
-		int numberOfHorizontalBoxes = mainPanelWidth / ColorBoxPanel.SIZE.width;
-		int numberOfVerticalBoxes = axes.length / numberOfHorizontalBoxes + 1;
+        IAxis[] axes = controller.getAxes();
+        int numberOfHorizontalBoxes = mainPanelWidth / ColorBoxPanel.SIZE.width;
+        int numberOfVerticalBoxes = axes.length / numberOfHorizontalBoxes + 1;
 
-		logger.fine(">>> NUMBER OF HORIZONTAL BOXES: " + numberOfHorizontalBoxes);
+        logger.fine(">>> NUMBER OF HORIZONTAL BOXES: " + numberOfHorizontalBoxes);
         logger.fine(">>> NUMBER OF VERTICAL BOXES: " + numberOfVerticalBoxes);
 
-		JPanel subPanel = new JPanel(new GridBagLayout());
-		subPanel.setBackground(Color.DARK_GRAY);
-		GridBagConstraints grid = new GridBagConstraints();
-		grid.weightx = 0.5f;
-		grid.fill = GridBagConstraints.HORIZONTAL;
-		add(subPanel);
+        JPanel subPanel = new JPanel(new GridBagLayout());
+        subPanel.setBackground(Color.DARK_GRAY);
+        GridBagConstraints grid = new GridBagConstraints();
+        grid.weightx = 0.5f;
+        grid.fill = GridBagConstraints.HORIZONTAL;
+        add(subPanel);
 
-		int x = 0, y = 0;
-		for(IAxis axis : axes) {
-			grid.gridx = x;
-			grid.gridy = y;
-			subPanel.add(new AxisPanel(axis), grid);
-			x++;
-			if(x == numberOfHorizontalBoxes) {
-				x = 0;
-				y++;
-			}
-		}
-	}
+        int x = 0, y = 0;
+        for (IAxis axis : axes) {
+            grid.gridx = x;
+            grid.gridy = y;
+            subPanel.add(new AxisPanel(axis), grid);
+            x++;
+            if (x == numberOfHorizontalBoxes) {
+                x = 0;
+                y++;
+            }
+        }
+    }
 
 }

@@ -74,22 +74,22 @@ public class Craft {
 //        }
 //    }
 
-    /** */
+    /**  */
     public void goDown() {
         dy = 1;
     }
 
-    /** */
+    /**  */
     public void goUp() {
         dy = -1;
     }
 
-    /** */
+    /**  */
     public void goRight() {
         dx = 1;
     }
 
-    /** */
+    /**  */
     public void goLeft() {
         dx = -1;
     }
@@ -114,7 +114,7 @@ public class Craft {
 //        }
 //    }
 
-    /** */
+    /**  */
     public void stopMoving() {
         dx = 0;
         dy = 0;

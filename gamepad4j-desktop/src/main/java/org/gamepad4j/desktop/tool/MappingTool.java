@@ -12,16 +12,16 @@ package org.gamepad4j.desktop.tool;
  * @version $Revision: $
  */
 public class MappingTool {
-	
-	public static void main(String[] args) {
-		MappingTool gamepadTest = new MappingTool();
-		gamepadTest.runTest();
-	}
 
-	private void runTest() {
-		new MappingToolWindow().setVisible(true);
-		Thread checkThread = new Thread(new GamepadCheck());
-		checkThread.setDaemon(true);
-		checkThread.start();
-	}
+    public static void main(String[] args) {
+        MappingTool gamepadTest = new MappingTool();
+        gamepadTest.runTest();
+    }
+
+    private void runTest() {
+        new MappingToolWindow().setVisible(true);
+        Thread checkThread = new Thread(new GamepadCheck());
+        checkThread.setDaemon(true);
+        checkThread.start();
+    }
 }

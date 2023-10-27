@@ -78,7 +78,7 @@ public class Board extends JPanel implements ActionListener, Runnable {
         repaint();
     }
 
-int c = 0;
+    int c = 0;
 
     /**
      * Gamepad state checking loop (equates typical game main loop)
@@ -86,62 +86,62 @@ int c = 0;
     @Override
     public void run() {
         while (true) {
-try {
-            // Poll the state of the controllers
-            Controllers.checkControllers();
-            IController[] gamepads = Controllers.getControllers();
-            if (gamepads.length > 0) {
-                boolean moving = false;
+            try {
+                // Poll the state of the controllers
+                Controllers.checkControllers();
+                IController[] gamepads = Controllers.getControllers();
+                if (gamepads.length > 0) {
+                    boolean moving = false;
 
-                IController mainController = gamepads[0];
-                DpadDirection dpadDirection = mainController.getDpadDirection();
-                if (dpadDirection == DpadDirection.UP) {
-                    craft.goUp();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.DOWN) {
-                    craft.goDown();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.LEFT) {
-                    craft.goLeft();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.RIGHT) {
-                    craft.goRight();
-                    moving = true;
-                }
-
-Debug.println(Level.FINER, "controller: " + mainController + ", " + Arrays.toString(mainController.getSticks()));
-                IStick leftStick = mainController.getStick(StickID.LEFT);
-                if (leftStick != null) {
-                    StickPosition leftStickPosition = leftStick.getPosition();
-                    if (!leftStickPosition.isStickCentered()) {
-Debug.println("Stick degree: " + leftStickPosition.getDegree());
-                    }
-                    // Get direction from left analog stick as if it were a digital pad
-                    // (no degree / speed calculations here, because I'm too lazy)
-                    DpadDirection mainDirection = leftStickPosition.getDirection();
-                    if (mainDirection == DpadDirection.UP) {
+                    IController mainController = gamepads[0];
+                    DpadDirection dpadDirection = mainController.getDpadDirection();
+                    if (dpadDirection == DpadDirection.UP) {
                         craft.goUp();
                         moving = true;
-                    } else if (mainDirection == DpadDirection.DOWN) {
+                    } else if (dpadDirection == DpadDirection.DOWN) {
                         craft.goDown();
                         moving = true;
-                    } else if (mainDirection == DpadDirection.LEFT) {
+                    } else if (dpadDirection == DpadDirection.LEFT) {
                         craft.goLeft();
                         moving = true;
-                    } else if (mainDirection == DpadDirection.RIGHT) {
+                    } else if (dpadDirection == DpadDirection.RIGHT) {
                         craft.goRight();
                         moving = true;
                     }
+
+                    Debug.println(Level.FINER, "controller: " + mainController + ", " + Arrays.toString(mainController.getSticks()));
+                    IStick leftStick = mainController.getStick(StickID.LEFT);
+                    if (leftStick != null) {
+                        StickPosition leftStickPosition = leftStick.getPosition();
+                        if (!leftStickPosition.isStickCentered()) {
+                            Debug.println("Stick degree: " + leftStickPosition.getDegree());
+                        }
+                        // Get direction from left analog stick as if it were a digital pad
+                        // (no degree / speed calculations here, because I'm too lazy)
+                        DpadDirection mainDirection = leftStickPosition.getDirection();
+                        if (mainDirection == DpadDirection.UP) {
+                            craft.goUp();
+                            moving = true;
+                        } else if (mainDirection == DpadDirection.DOWN) {
+                            craft.goDown();
+                            moving = true;
+                        } else if (mainDirection == DpadDirection.LEFT) {
+                            craft.goLeft();
+                            moving = true;
+                        } else if (mainDirection == DpadDirection.RIGHT) {
+                            craft.goRight();
+                            moving = true;
+                        }
+                    }
+                    if (!moving) {
+                        craft.stopMoving();
+                    }
                 }
-                if (!moving) {
-                    craft.stopMoving();
-                }
+            } catch (Exception e) {
+                Debug.printStackTrace(e);
+                c++;
+                assert c < 10 : "too many errors";
             }
-} catch (Exception e) {
- Debug.printStackTrace(e);
- c++;
- assert c < 10 : "too many errors";
-}
         }
     }
 }

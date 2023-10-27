@@ -42,7 +42,7 @@ public class BaseAxis implements IAxis {
     /**
      * Creates a new base axis instance.
      *
-     * @param ID  The ID of the axis (important only for multi-axes components like sticks).
+     * @param ID     The ID of the axis (important only for multi-axes components like sticks).
      * @param number The number of the axis.
      */
     public BaseAxis(AxisID ID, int number) {

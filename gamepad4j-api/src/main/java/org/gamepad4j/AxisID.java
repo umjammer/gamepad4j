@@ -12,10 +12,9 @@ package org.gamepad4j;
  */
 public enum AxisID {
 
-	X,
-	Y,
-	D_PAD_X,
-	D_PAD_Y,
-	TRIGGER
-	;
+    X,
+    Y,
+    D_PAD_X,
+    D_PAD_Y,
+    TRIGGER;
 }

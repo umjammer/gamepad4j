@@ -29,7 +29,7 @@ import org.gamepad4j.TriggerID;
  */
 public abstract class AbstractBaseController implements IController {
 
-	static final Logger logger = Logger.getLogger(AbstractBaseController.class.getName());
+    static final Logger logger = Logger.getLogger(AbstractBaseController.class.getName());
 
     /** Stores the deviceID of this controller. */
     protected int deviceID = -1;
@@ -156,7 +156,7 @@ public abstract class AbstractBaseController implements IController {
      * @param vendorID the vendorID to set
      */
     public void setVendorID(int vendorID) {
-		logger.fine("Set controller vendor ID: " + Integer.toHexString(vendorID));
+        logger.fine("Set controller vendor ID: " + Integer.toHexString(vendorID));
         this.vendorID = vendorID;
     }
 
@@ -169,7 +169,7 @@ public abstract class AbstractBaseController implements IController {
      * @param productID the productID to set
      */
     public void setProductID(int productID) {
-		logger.fine("Set controller product ID: " + Integer.toHexString(productID));
+        logger.fine("Set controller product ID: " + Integer.toHexString(productID));
         this.productID = productID;
     }
 

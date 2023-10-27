@@ -30,7 +30,9 @@ public interface Gamepad {
         return new org.gamepad4j.macos.MacosxGamepad();
     }
 
-    interface EventData {}
+    interface EventData {
+
+    }
 
     class Device implements EventData {
 
@@ -60,7 +62,9 @@ public interface Gamepad {
         /** Array[numButtons] of values representing the current state of each button */
         public boolean[] buttonStates;
 
-        public interface Private {}
+        public interface Private {
+
+        }
 
         /**
          * Platform-specific device data storage. Don't touch unless you know what you're doing and don't

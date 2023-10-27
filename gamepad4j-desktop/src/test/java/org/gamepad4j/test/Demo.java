@@ -2,6 +2,7 @@ package org.gamepad4j.test;
 
 import javax.swing.JFrame;
 
+
 public class Demo extends JFrame {
 
     public Demo() {

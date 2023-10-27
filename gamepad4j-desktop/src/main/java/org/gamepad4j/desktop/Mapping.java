@@ -86,7 +86,7 @@ public class Mapping {
                 String productHex = Integer.toHexString(controller.getProductID()).toUpperCase();
                 String mappingFileName = "/mappings/" + PlatformUtil.getPlatform().name() + "/"
                         + "0x" + vendorHex + "-0x" + productHex + "-gamepad4j-mapping.properties";
-				logger.fine("Load mapping from resource: " + mappingFileName);
+                logger.fine("Load mapping from resource: " + mappingFileName);
 
                 InputStream propIn = null;
                 try {
@@ -101,7 +101,7 @@ public class Mapping {
                             controller.setDefaultDeadZone(deadZone);
                         }
                     } else {
-						logger.fine("WARNING: Mapping does not exist: " + mappingFileName);
+                        logger.fine("WARNING: Mapping does not exist: " + mappingFileName);
                     }
                 } finally {
                     try {
@@ -194,19 +194,19 @@ public class Mapping {
     private static void addMapping(MappingType type, String namePart, String value, long deviceTypeIdentifier) {
         if (type == MappingType.BUTTON) {
             Map<Integer, String> buttonMap = getOrCreateMapForDevice(buttonMapId, deviceTypeIdentifier);
-			logger.fine("Add mapping for BUTTON: " + namePart + "=" + value);
+            logger.fine("Add mapping for BUTTON: " + namePart + "=" + value);
             buttonMap.put(intFromString(value), namePart);
         } else if (type == MappingType.TRIGGER_AXIS) {
             Map<Integer, String> triggerMap = getOrCreateMapForDevice(triggerAxisMapId, deviceTypeIdentifier);
-			logger.fine("Add mapping for TRIGGER: " + namePart + "=" + value);
+            logger.fine("Add mapping for TRIGGER: " + namePart + "=" + value);
             triggerMap.put(intFromString(value), namePart);
         } else if (type == MappingType.DPAD_AXIS) {
             Map<Integer, String> dpadMap = getOrCreateMapForDevice(dpadAxisMapId, deviceTypeIdentifier);
-			logger.fine("Add mapping for DPAD: " + namePart + "=" + value);
+            logger.fine("Add mapping for DPAD: " + namePart + "=" + value);
             dpadMap.put(intFromString(value), namePart);
         } else if (type == MappingType.STICK_AXIS) {
             Map<Integer, String> stickMap = getOrCreateMapForDevice(stickAxisMapId, deviceTypeIdentifier);
-			logger.fine("Add mapping for STICK: " + namePart + "=" + value);
+            logger.fine("Add mapping for STICK: " + namePart + "=" + value);
             stickMap.put(intFromString(value), namePart);
         }
     }
