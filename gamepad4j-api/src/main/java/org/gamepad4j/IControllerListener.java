@@ -53,4 +53,23 @@ public interface IControllerListener {
      * @param stick
      */
     void moveStick(IController controller, StickID stick);
+
+    /** */
+    class IControllerAdapter implements IControllerListener {
+
+        @Override public void connected(IController controller) {
+        }
+
+        @Override public void disConnected(IController controller) {
+        }
+
+        @Override public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
+        }
+
+        @Override public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
+        }
+
+        @Override public void moveStick(IController controller, StickID stick) {
+        }
+    }
 }

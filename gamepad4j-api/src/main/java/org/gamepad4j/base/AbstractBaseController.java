@@ -32,7 +32,7 @@ public abstract class AbstractBaseController implements IController {
     static final Logger logger = Logger.getLogger(AbstractBaseController.class.getName());
 
     /** Stores the deviceID of this controller. */
-    protected int deviceID = -1;
+    protected final int deviceID;
 
     /** Stores the vendorID of this controller. */
     protected int vendorID = -1;
@@ -46,12 +46,12 @@ public abstract class AbstractBaseController implements IController {
     /** Stores the last d-pad direction. */
     protected DpadDirection lastDirection = null;
 
-    // ----------------------- d-pad -----------------------------
+    // d-pad
 
     /** Stores a map for the axes used by an analog d-pad */
     protected Map<AxisID, BaseAxis> dpadAxisMap = new HashMap<>();
 
-    // ----------------------- buttons ---------------------------
+    // buttons
 
     /** Lookup map for buttons based on their type. */
     protected Map<ButtonID, IButton> buttonMap = new HashMap<>();
@@ -62,7 +62,7 @@ public abstract class AbstractBaseController implements IController {
     /** Stores the buttons of this controller. */
     protected BaseButton[] buttons = null;
 
-    // ----------------------- triggers ---------------------------
+    // triggers
 
     /** Lookup map for buttons based on their type. */
     protected Map<TriggerID, ITrigger> triggerMap = new HashMap<>();
@@ -70,7 +70,7 @@ public abstract class AbstractBaseController implements IController {
     /** Stores the buttons of this controller. */
     protected BaseTrigger[] triggers = null;
 
-    // ----------------------- sticks ---------------------------
+    // sticks
 
     /** Lookup map for sticks based on their type. */
     protected Map<StickID, IStick> stickMap = new HashMap<>();
@@ -78,7 +78,7 @@ public abstract class AbstractBaseController implements IController {
     /** Stores the sticks of this controller. */
     protected BaseStick[] sticks = null;
 
-    // ----------------------- axes (for triggers AND sticks) ---------------------------
+    // axes (for triggers AND sticks)
 
     /** Stores the axes of this controller. */
     protected BaseAxis[] axes = null;
@@ -138,13 +138,6 @@ public abstract class AbstractBaseController implements IController {
     @Override
     public int getDeviceID() {
         return this.deviceID;
-    }
-
-    /**
-     * @param deviceID the deviceID to set
-     */
-    public void setDeviceID(int deviceID) {
-        this.deviceID = deviceID;
     }
 
     @Override

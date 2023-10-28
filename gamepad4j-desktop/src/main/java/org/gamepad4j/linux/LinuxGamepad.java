@@ -21,9 +21,14 @@
 package org.gamepad4j.linux;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.sun.jna.NativeLong;
@@ -36,7 +41,7 @@ import net.java.games.input.linux.LinuxIO.input_event;
 import net.java.games.input.linux.LinuxIO.input_id;
 import net.java.games.input.linux.LinuxIO.stat;
 import org.gamepad4j.desktop.BaseGamepad;
-import org.gamepad4j.desktop.Gamepad.Device.Private;
+import org.gamepad4j.macos.MacosxGamepad;
 import org.gamepad4j.util.PlatformUtil;
 
 import static net.java.games.input.linux.LinuxIO.ABS_CNT;
@@ -57,10 +62,6 @@ import static net.java.games.input.linux.NativeDefinitions.EV_ABS;
 import static net.java.games.input.linux.NativeDefinitions.EV_CNT;
 import static net.java.games.input.linux.NativeDefinitions.EV_KEY;
 import static net.java.games.input.linux.NativeDefinitions.KEY_CNT;
-import static org.gamepad4j.desktop.Gamepad.EventType.AXIS_MOVED;
-import static org.gamepad4j.desktop.Gamepad.EventType.BUTTON_DOWN;
-import static org.gamepad4j.desktop.Gamepad.EventType.BUTTON_UP;
-import static org.gamepad4j.desktop.Gamepad.EventType.DEVICE_REMOVED;
 
 
 /**
@@ -70,8 +71,13 @@ public class LinuxGamepad extends BaseGamepad {
 
     private static final Logger logger = Logger.getLogger(LinuxGamepad.class.getName());
 
-    static class DevicePrivate implements Private {
-        ExecutorService es = Executors.newSingleThreadExecutor();
+    private static class LinuxDevice extends Device {
+        ExecutorService inputEs = Executors.newSingleThreadExecutor();
+
+        LinuxDevice(List<GamepadListener> listeners) {
+            super(listeners);
+        }
+
         int fd;
         String path;
         int[] buttonMap = new int[KEY_CNT - BTN_MISC];
@@ -79,175 +85,117 @@ public class LinuxGamepad extends BaseGamepad {
         input_absinfo[] axisInfo = new input_absinfo[ABS_CNT];
     }
 
-    private Device[] devices = null;
-    private int numDevices = 0;
-    private int nextDeviceID = 0;
-    private final Object devicesMutex = new Object();
+    private final ScheduledExecutorService detectSes = Executors.newSingleThreadScheduledExecutor();
 
-    private QueuedEvent[] eventQueue = null;
-    private int eventQueueSize = 0;
-    private int eventCount = 0;
-    private final Object eventQueueMutex = new Object();
+    private final List<LinuxDevice> devices = new ArrayList<>();
+    private int nextDeviceID = 0;
 
     private boolean inited = false;
 
     /** */
-    private static boolean test_bit(int bitIndex, int[] array) {
+    private static boolean testBit(int bitIndex, int[] array) {
         return ((array[bitIndex / (Integer.BYTES * 8)] >> (bitIndex % (Integer.BYTES * 8))) & 0x1) != 0;
     }
 
     @Override
-    public void init() {
+    public void open() {
 logger.fine("init...");
         if (!inited) {
+            detectSes.schedule(this::detectDevices, 1000, TimeUnit.MILLISECONDS);
+
             inited = true;
 logger.fine("initialized");
-            detectDevices();
         }
     }
 
-    private void disposeDevice(Device device) {
-logger.fine("despose device...");
-        LinuxIO.INSTANCE.close(((DevicePrivate) device.privateData).fd);
-    }
-
     @Override
-    public void shutdown() {
+    public void close() {
 logger.fine("shutdown...");
         if (inited) {
-            int eventIndex;
-            int devicesLeft;
-            int gamepadIndex;
+            detectSes.shutdownNow();
 
-            do {
-                synchronized (devicesMutex) {
-                    devicesLeft = numDevices;
-                    if (devicesLeft > 0) {
-
-                         ((DevicePrivate) devices[0].privateData).es.shutdownNow();
-
-                        numDevices--;
-                        for (gamepadIndex = 0; gamepadIndex < numDevices; gamepadIndex++) {
-                            devices[gamepadIndex] = devices[gamepadIndex + 1];
-                        }
-                    }
-                }
-            } while (devicesLeft > 0);
-
-            devices = null;
-
-            for (eventIndex = 0; eventIndex < eventCount; eventIndex++) {
-                if (eventQueue[eventIndex].eventType == DEVICE_REMOVED) {
-                    disposeDevice((Device) eventQueue[eventIndex].eventData);
-                }
-            }
-
-            eventQueueSize = 0;
-            eventCount = 0;
-            eventQueue = null;
-
+            devices.clear();
             inited = false;
         }
     }
 
     @Override
-    public int numDevices() {
-        int result;
-
-        synchronized (devicesMutex) {
-            result = numDevices;
+    public int size() {
+        synchronized (devices) {
+            return devices.size();
         }
-        return result;
     }
 
     @Override
-    public Device deviceAtIndex(int deviceIndex) {
-        Device result;
-
-        synchronized (devicesMutex) {
-            if (deviceIndex >= numDevices) {
-                result = null;
-            } else {
-                result = devices[deviceIndex];
+    public Device get(int deviceId) {
+        synchronized (devices) {
+            for (LinuxDevice device : devices) {
+                if (device.deviceID == deviceId) {
+                    return devices.get(deviceId);
+                }
             }
-        }
-
-        return result;
-    }
-
-    private void queueEvent(int deviceID, EventType eventType, EventData eventData) {
-        QueuedEvent queuedEvent = new QueuedEvent();
-
-        queuedEvent.deviceID = deviceID;
-        queuedEvent.eventType = eventType;
-        queuedEvent.eventData = eventData;
-
-        synchronized (eventQueueMutex) {
-            if (eventCount >= eventQueueSize) {
-                eventQueueSize = eventQueueSize == 0 ? 1 : eventQueueSize * 2;
-                eventQueue = Arrays.copyOf(eventQueue, eventQueueSize);
-            }
-            eventQueue[eventCount++] = queuedEvent;
+logger.warning("no such deviceId: " + deviceId);
+            return null;
         }
     }
 
-    private void deviceThread(Device device) {
-        DevicePrivate devicePrivate = (DevicePrivate) device.privateData;
+    /** device input report thread */
+    private void deviceThread(LinuxDevice device) {
 
         input_event event = new input_event();
-        while (LinuxIO.INSTANCE.read(devicePrivate.fd, event.getPointer(), new NativeLong(event.size())).intValue() > 0) {
+        while (LinuxIO.INSTANCE.read(device.fd, event.getPointer(), new NativeLong(event.size())).intValue() > 0) {
             event.read();
             if (event.type == EV_ABS) {
-                float value;
-
-                if (event.code > ABS_MAX || devicePrivate.axisMap[event.code] == -1) {
+                if (event.code > ABS_MAX || device.axisMap[event.code] == -1) {
                     continue;
                 }
 
-                value = (event.value - devicePrivate.axisInfo[event.code].minimum) / (float) (devicePrivate.axisInfo[event.code].maximum - devicePrivate.axisInfo[event.code].minimum) * 2.0f - 1.0f;
-                AxisEventData axisEvent = new AxisEventData(device,
-                        event.time.tv_sec + event.time.tv_usec * 0.000001,
-                        devicePrivate.axisMap[event.code],
-                        value);
-                queueEvent(device.deviceID, AXIS_MOVED, axisEvent);
+                float value = (event.value - device.axisInfo[event.code].minimum) / (float) (device.axisInfo[event.code].maximum - device.axisInfo[event.code].minimum) * 2.0f - 1.0f;
+                device.fireAxisMove(device.axisMap[event.code], value);
 
-                device.axisStates[devicePrivate.axisMap[event.code]] = value;
+                device.axisStates[device.axisMap[event.code]] = value;
 
             } else if (event.type == EV_KEY) {
-                if (event.code < BTN_MISC || event.code > KEY_MAX || devicePrivate.buttonMap[event.code - BTN_MISC] == -1) {
+                if (event.code < BTN_MISC || event.code > KEY_MAX || device.buttonMap[event.code - BTN_MISC] == -1) {
                     continue;
                 }
 
-                ButtonEventData buttonEvent = new ButtonEventData(device,
-                        event.time.tv_sec + event.time.tv_usec * 0.000001,
-                        devicePrivate.buttonMap[event.code - BTN_MISC],
-                        event.value != 0);
-                queueEvent(device.deviceID, event.value != 0 ? BUTTON_DOWN : BUTTON_UP, buttonEvent);
+                if (event.value != 0) {
+                    device.fireButtonDown(device.buttonMap[event.code - BTN_MISC]);
+                } else {
+                    device.fireButtonUp(device.buttonMap[event.code - BTN_MISC]);
+                }
 
-                device.buttonStates[devicePrivate.buttonMap[event.code - BTN_MISC]] = event.value != 0;
+                device.buttonStates[device.buttonMap[event.code - BTN_MISC]] = event.value != 0;
             }
         }
 
-        queueEvent(device.deviceID, DEVICE_REMOVED, device);
+        removeDevice(device);
+    }
 
-        synchronized (devicesMutex) {
-            for (int gamepadIndex = 0; gamepadIndex < numDevices; gamepadIndex++) {
-                if (devices[gamepadIndex] == device) {
-                    int gamepadIndex2;
+    /** device removal */
+    private void removeDevice(LinuxDevice device) {
+        device.fireDeviceRemove();
 
-                    numDevices--;
-                    for (gamepadIndex2 = gamepadIndex; gamepadIndex2 < numDevices; gamepadIndex2++) {
-                        devices[gamepadIndex2] = devices[gamepadIndex2 + 1];
-                    }
-                    gamepadIndex--;
+        synchronized (devices) {
+            Iterator<LinuxDevice> i = devices.iterator();
+            while (i.hasNext()) {
+                LinuxDevice toBeRemoved = i.next();
+                if (toBeRemoved == device) {
+                    logger.fine("dispose device...");
+                    LinuxIO.INSTANCE.close(device.fd);
+
+                    i.remove();
+                    break;
                 }
             }
         }
     }
 
+    /** @see "https://stackoverflow.com/a/5853198" */
     private class MyRunnable implements Runnable {
-        Device device;
-        public MyRunnable(Device device) {
+        LinuxDevice device;
+        public MyRunnable(LinuxDevice device) {
             this.device = device;
         }
 
@@ -257,19 +205,20 @@ logger.fine("shutdown...");
         }
     }
 
+    /** seemed for polling */
     private long lastInputStatTime;
 
-    @Override
-    public void detectDevices() {
-        int[] evCapBits = new int[(EV_CNT - 1) / Integer.BYTES * 8 + 1];
-        int[] evKeyBits = new int[(KEY_CNT - 1) / Integer.BYTES * 8 + 1];
-        int[] evAbsBits = new int[(ABS_CNT - 1) / Integer.BYTES * 8 + 1];
-
+    /** device detection thread */
+    private void detectDevices() {
         if (!inited) {
             return;
         }
 
-        synchronized (devicesMutex) {
+        int[] evCapBits = new int[(EV_CNT - 1) / Integer.BYTES * 8 + 1];
+        int[] evKeyBits = new int[(KEY_CNT - 1) / Integer.BYTES * 8 + 1];
+        int[] evAbsBits = new int[(ABS_CNT - 1) / Integer.BYTES * 8 + 1];
+
+        synchronized (devices) {
 
             Pointer /* DIR */ dev_input = LinuxIO.INSTANCE.opendir("/dev/input");
             long currentTime = System.nanoTime();
@@ -286,8 +235,8 @@ logger.fine("shutdown...");
                         }
 
                         boolean duplicate = false;
-                        for (int gamepadIndex = 0; gamepadIndex < numDevices; gamepadIndex++) {
-                            if (((DevicePrivate) devices[gamepadIndex].privateData).path.equals(fileName)) {
+                        for (LinuxDevice device : devices) {
+                            if (device.path.equals(fileName)) {
                                 duplicate = true;
                                 break;
                             }
@@ -306,24 +255,23 @@ logger.fine("shutdown...");
                             LinuxIO.INSTANCE.close(fd);
                             continue;
                         }
-                        if (!test_bit(EV_KEY, evCapBits) || !test_bit(EV_ABS, evCapBits) ||
-                                !test_bit(ABS_X, evAbsBits) || !test_bit(ABS_Y, evAbsBits) ||
-                                (!test_bit(BTN_TRIGGER, evKeyBits) && !test_bit(BTN_A, evKeyBits) && !test_bit(BTN_1, evKeyBits))) {
+                        if (!testBit(EV_KEY, evCapBits) || !testBit(EV_ABS, evCapBits) ||
+                                !testBit(ABS_X, evAbsBits) || !testBit(ABS_Y, evAbsBits) ||
+                                (!testBit(BTN_TRIGGER, evKeyBits) && !testBit(BTN_A, evKeyBits) && !testBit(BTN_1, evKeyBits))) {
                             LinuxIO.INSTANCE.close(fd);
                             continue;
                         }
 
-                        Device deviceRecord = new Device();
-                        deviceRecord.deviceID = nextDeviceID++;
-                        devices = Arrays.copyOf(devices, numDevices + 1);
-                        devices[numDevices++] = deviceRecord;
+                        LinuxDevice device = new LinuxDevice(listeners);
+                        device.deviceID = nextDeviceID++;
 
-                        DevicePrivate deviceRecordPrivate = new DevicePrivate();
-                        deviceRecordPrivate.fd = fd;
-                        deviceRecordPrivate.path = fileName;
-                        Arrays.fill(deviceRecordPrivate.buttonMap, 0, deviceRecordPrivate.buttonMap.length, (byte) 0xFF);
-                        Arrays.fill(deviceRecordPrivate.axisMap, 0, deviceRecordPrivate.axisMap.length, (byte) 0xFF);
-                        deviceRecord.privateData = deviceRecordPrivate;
+                        device.fd = fd;
+                        device.path = fileName;
+
+                        devices.add(device);
+
+                        Arrays.fill(device.buttonMap, 0, device.buttonMap.length, (byte) 0xFF);
+                        Arrays.fill(device.axisMap, 0, device.axisMap.length, (byte) 0xFF);
 
                         String description;
                         byte[] name = new byte[128];
@@ -332,14 +280,14 @@ logger.fine("shutdown...");
                         } else {
                             description = fileName;
                         }
-                        deviceRecord.description = description;
+                        device.description = description;
 
                         input_id id = new input_id();
                         if (LinuxIO.INSTANCE.ioctl(fd, EVIOCGID(id.size()), id.getPointer()) == 0) {
-                            deviceRecord.vendorID = id.vendor;
-                            deviceRecord.productID = id.product;
+                            device.vendorID = id.vendor;
+                            device.productID = id.product;
                         } else {
-                            deviceRecord.vendorID = deviceRecord.productID = 0;
+                            device.vendorID = device.productID = 0;
                         }
 
                         Arrays.fill(evKeyBits, 0, evKeyBits.length, (byte) 0);
@@ -347,32 +295,32 @@ logger.fine("shutdown...");
                         LinuxIO.INSTANCE.ioctl(fd, EVIOCGBIT(EV_KEY, evKeyBits.length), evKeyBits);
                         LinuxIO.INSTANCE.ioctl(fd, EVIOCGBIT(EV_ABS, evAbsBits.length), evAbsBits);
 
-                        deviceRecord.numAxes = 0;
+                        device.numAxes = 0;
                         for (int bit = 0; bit < ABS_CNT; bit++) {
-                            if (test_bit(bit, evAbsBits)) {
-                                if (LinuxIO.INSTANCE.ioctl(fd, EVIOCGABS(bit, deviceRecordPrivate.axisInfo[bit].size()),
-                                        deviceRecordPrivate.axisInfo[bit].getPointer()) < 0 ||
-                                        deviceRecordPrivate.axisInfo[bit].minimum == deviceRecordPrivate.axisInfo[bit].maximum) {
+                            if (testBit(bit, evAbsBits)) {
+                                if (LinuxIO.INSTANCE.ioctl(fd, EVIOCGABS(bit, device.axisInfo[bit].size()),
+                                        device.axisInfo[bit].getPointer()) < 0 ||
+                                        device.axisInfo[bit].minimum == device.axisInfo[bit].maximum) {
                                     continue;
                                 }
-                                deviceRecordPrivate.axisMap[bit] = deviceRecord.numAxes;
-                                deviceRecord.numAxes++;
+                                device.axisMap[bit] = device.numAxes;
+                                device.numAxes++;
                             }
                         }
-                        deviceRecord.numButtons = 0;
+                        device.numButtons = 0;
                         for (int bit = BTN_MISC; bit < KEY_CNT; bit++) {
-                            if (test_bit(bit, evKeyBits)) {
-                                deviceRecordPrivate.buttonMap[bit - BTN_MISC] = deviceRecord.numButtons;
-                                deviceRecord.numButtons++;
+                            if (testBit(bit, evKeyBits)) {
+                                device.buttonMap[bit - BTN_MISC] = device.numButtons;
+                                device.numButtons++;
                             }
                         }
 
-                        deviceRecord.axisStates = new float[deviceRecord.numAxes];
-                        deviceRecord.buttonStates = new boolean[deviceRecord.numButtons];
+                        device.axisStates = new float[device.numAxes];
+                        device.buttonStates = new boolean[device.numButtons];
 
-                        fireDeviceAttach(deviceRecord);
+                        device.fireDeviceAttach();
 
-                        deviceRecordPrivate.es.submit(new MyRunnable(deviceRecord));
+                        device.inputEs.submit(new MyRunnable(device));
                     }
                 }
                 LinuxIO.INSTANCE.closedir(dev_input);
@@ -380,29 +328,6 @@ logger.fine("shutdown...");
 
             lastInputStatTime = currentTime;
         }
-    }
-
-    private boolean inProcessEvents;
-
-    @Override
-    public void processEvents() {
-        int eventIndex;
-
-        if (!inited || inProcessEvents) {
-            return;
-        }
-
-        inProcessEvents = true;
-        synchronized (eventQueueMutex) {
-            for (eventIndex = 0; eventIndex < eventCount; eventIndex++) {
-                processQueuedEvent(eventQueue[eventIndex]);
-                if (eventQueue[eventIndex].eventType == DEVICE_REMOVED) {
-                    disposeDevice((Device) eventQueue[eventIndex].eventData);
-                }
-            }
-            eventCount = 0;
-        }
-        inProcessEvents = false;
     }
 
     @Override

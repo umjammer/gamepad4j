@@ -12,6 +12,8 @@ import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.gamepad4j.IControllerListener.IControllerAdapter;
+
 
 /**
  * Handles instantiating controller instances.
@@ -22,9 +24,6 @@ import java.util.logging.Logger;
 public class Controllers {
 
     private static final Logger logger = Logger.getLogger(Controllers.class.getName());
-
-    /** The list of available controllers. */
-    private final List<IController> controllers = new ArrayList<>();
 
     /** The controller provider implementation. */
     private final IControllerProvider controllerProvider;
@@ -41,7 +40,6 @@ public class Controllers {
             for (IControllerProvider controllerProvider : ServiceLoader.load(IControllerProvider.class)) {
                 if (controllerProvider.isSupported()) {
                     controllerProvider.initialize();
-                    controllerProvider.addListener(mainListener);
                     this.controllerProvider = controllerProvider;
                     logger.fine("Controller provider ready: " + controllerProvider.getClass().getName());
                     return;
@@ -71,62 +69,12 @@ public class Controllers {
     }
 
     /**
-     * Lets the backend check the state of all controllers.
-     */
-    public void checkControllers() {
-        controllerProvider.checkControllers();
-    }
-
-    /** Manages controllers connect/disconnect. */
-    private final IControllerListener mainListener = new IControllerListener() {
-        @Override
-        public void connected(IController controller) {
-            // First make sure it's not already in the list
-            boolean addIt = true;
-            for (IController oldController : controllers) {
-                if (oldController.getDeviceID() == controller.getDeviceID()) {
-                    addIt = false;
-                }
-            }
-            if (addIt) {
-                controllers.add(controller);
-            }
-        }
-
-        @Override
-        public void disConnected(IController controller) {
-            if (!controllers.isEmpty()) {
-                Iterator<IController> i = controllers.iterator();
-                while (i.hasNext()) {
-                    IController oldController = i.next();
-                    if (oldController.getDeviceID() != controller.getDeviceID()) {
-                        i.remove();
-                        break;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
-        }
-
-        @Override
-        public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
-        }
-
-        @Override
-        public void moveStick(IController controller, StickID stick) {
-        }
-    };
-
-    /**
      * Returns all the available controllers.
      *
      * @return The available controllers.
      */
     public IController[] getControllers() {
-        return controllers.toArray(IController[]::new);
+        return controllerProvider.getControllers();
     }
 
     /**

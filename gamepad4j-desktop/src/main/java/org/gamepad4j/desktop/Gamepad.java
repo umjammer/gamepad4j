@@ -20,7 +20,7 @@
 
 package org.gamepad4j.desktop;
 
-
+import java.util.List;
 import java.util.ServiceLoader;
 
 
@@ -31,7 +31,7 @@ import java.util.ServiceLoader;
  */
 public interface Gamepad {
 
-    /** */
+    /** Returns a suitable service provider. */
     static Gamepad getGamepad() {
         for (Gamepad gamepad : ServiceLoader.load(Gamepad.class)) {
             if (gamepad.isSupported()) {
@@ -41,10 +41,8 @@ public interface Gamepad {
         throw new IllegalStateException("no suitable native adapter");
     }
 
-    interface EventData {
-    }
-
-    class Device implements EventData {
+    /** Represents an input device */
+    class Device {
 
         /**
          * Unique device identifier for application session, starting at 0 for the first device attached and
@@ -72,147 +70,98 @@ public interface Gamepad {
         /** Array[numButtons] of values representing the current state of each button */
         public boolean[] buttonStates;
 
-        public interface Private {
+        /** */
+        private final List<GamepadListener> listeners;
+
+        /** */
+        protected Device(List<GamepadListener> listeners) {
+            this.listeners = listeners;
         }
 
-        /**
-         * Platform-specific device data storage. Don't touch unless you know what you're doing and don't
-         * mind your code breaking in future versions of this library.
-         */
-        public Private privateData;
-    }
-
-    enum EventType {
-        DEVICE_ATTACHED,
-        DEVICE_REMOVED,
-        BUTTON_DOWN,
-        BUTTON_UP,
-        AXIS_MOVED
-    }
-
-    class ButtonEventData implements EventData {
-
-        /** Device that generated the event */
-        public Device device;
-        /** Relative time of the event, in seconds */
-        public double timestamp;
-        /** Button being pushed or released */
-        public int buttonID;
-        /** True if button is down */
-        public boolean down;
-
-        public ButtonEventData(Device device, double timestamp, int buttonID, boolean down) {
-            this.device = device;
-            this.timestamp = timestamp;
-            this.buttonID = buttonID;
-            this.down = down;
+        /** */
+        public void fireDeviceAttach() {
+            listeners.forEach(l -> l.deviceAttach(this));
         }
-    }
 
-    class AxisEventData implements EventData {
+        /** */
+        public void fireDeviceRemove() {
+            listeners.forEach(l -> l.deviceRemove(this));
+        }
 
-        /** Device that generated the event */
-        public Device device;
-        /** Relative time of the event, in seconds */
-        public double timestamp;
-        /** Axis being moved */
-        public int axisID;
-        /** Axis position value, in the range [-1..1] */
-        public float value;
+        /** */
+        public void fireButtonDown(int buttonID) {
+            long ts = System.nanoTime();
+            listeners.forEach(l -> l.buttonDown(this, buttonID, ts));
+        }
 
-        public AxisEventData(Device device, double timestamp, int axisID, float value) {
-            this.device = device;
-            this.timestamp = timestamp;
-            this.axisID = axisID;
-            this.value = value;
+        /** */
+        public void fireButtonUp(int buttonID) {
+            long ts = System.nanoTime();
+            listeners.forEach(l -> l.buttonUp(this, buttonID, ts));
+        }
+
+        /** */
+        public void fireAxisMove(int axisID, float value) {
+            long ts = System.nanoTime();
+            listeners.forEach(l -> l.axisMove(this, axisID, value, ts));
         }
     }
 
     /**
-     * Initializes gamepad library and detects initial devices. Call this before any other Gamepad_*()
-     * function, other than callback registration functions. If you want to receive deviceAttachFunc
-     * callbacks from devices detected in Gamepad_init(), you must call Gamepad_deviceAttachFunc()
-     * before calling Gamepad_init().
+     * Initializes gamepad library and detects initial devices. Call this before any other
+     * methods, other than callback registration functions. If you want to receive deviceAttachFunc
+     * callbacks from devices detected in init(), you must call fireDeviceAttach()
+     * before calling init().
      */
-    void init();
+    void open();
 
     /**
      * Tears down all data structures created by the gamepad library and releases any memory that was
      * allocated. It is not necessary to call this function at application termination, but it's
      * provided in case you want to free memory associated with gamepads at some earlier time.
      */
-    void shutdown();
+    void close();
 
     /** Returns the number of currently attached gamepad devices. */
-    int numDevices();
+    int size();
 
-    /** Returns the specified Device struct, or NULL if deviceIndex is out of bounds. */
-    Device deviceAtIndex(int deviceIndex);
+    /** Returns the specified Device, or null if {@link Device#deviceID} is not found. */
+    Device get(int deviceIndex);
 
-    /**
-     * Polls for any devices that have been attached since the last call to Gamepad_detectDevices() or
-     * Gamepad_init(). If any new devices are found, the callback registered with
-     * Gamepad_deviceAttachFunc() (if any) will be called once per newly detected device.
-     * <p>
-     * Note that depending on implementation, you may receive button and axis event callbacks for
-     * devices that have not yet been detected with Gamepad_detectDevices(). You can safely ignore
-     * these events, but be aware that your callbacks might receive a device ID that hasn't been seen
-     * by your deviceAttachFunc.
-     */
-    void detectDevices();
-
-    /** ??? */
-    void processEvents();
-
-    /** */
+    /** tell this service provider is supported */
     boolean isSupported();
 
-    /** */
+    /** add an event listener for native devices */
     void addGamepadListener(GamepadListener l);
 
-    /** */
+    /** remove an event listener for native devices */
     void removeGamepadListener(GamepadListener l);
 
-    /** */
+    /** listener for native devices */
     interface GamepadListener {
 
         /**
-         * a function to be called whenever a device is attached. The specified function will be
-         * called only during calls to init() and detectDevices(), in the thread from
-         * which those functions were called. Calling this function with a NULL argument will stop any
-         * previously registered callback from being called subsequently.
+         * a function to be called whenever a device is attached.
          */
         void deviceAttach(Device device);
 
         /**
-         * a function to be called whenever a device is detached. The specified function can be
-         * called at any time, and will not necessarily be called from the main thread. Calling this
-         * function with a NULL argument will stop any previously registered callback from being called
-         * subsequently.
+         * a function to be called whenever a device is detached.
          */
         void deviceRemove(Device device);
 
         /**
-         * a function to be called whenever a button on any attached device is pressed. The
-         * specified function will be called only during calls to processEvents(), in the
-         * thread from which processEvents() was called. Calling this function with a null
-         * argument will stop any previously registered callback from being called subsequently.
+         * a function to be called whenever a button on any attached device is pressed.
          */
         void buttonDown(Device device, int buttonID, double timestamp);
 
         /**
-         * a function to be called whenever a button on any attached device is released. The
-         * specified function will be called only during calls to processEvents(), in the
-         * thread from which processEvents() was called. Calling this function with a null
-         * argument will stop any previously registered callback from being called subsequently.
+         * a function to be called whenever a button on any attached device is released.
          */
         void buttonUp(Device device, int buttonID, double timestamp);
 
         /**
-         * a function to be called whenever an axis on any attached device is moved. The
-         * specified function will be called only during calls to processEvents(), in the
-         * thread from which processEvents() was called. Calling this function with a null
-         * argument will stop any previously registered callback from being called subsequently.
+         * a function to be called whenever an axis on any attached device is moved.
          */
         void axisMove(Device device, int axisID, float value, double timestamp);
     }

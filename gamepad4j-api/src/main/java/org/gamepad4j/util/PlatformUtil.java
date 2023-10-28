@@ -6,10 +6,7 @@
 
 package org.gamepad4j.util;
 
-import java.lang.reflect.Field;
 import java.util.logging.Logger;
-
-import com.jogamp.common.os.Platform;
 
 
 /**

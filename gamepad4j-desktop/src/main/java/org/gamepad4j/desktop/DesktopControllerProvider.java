@@ -5,14 +5,20 @@
 package org.gamepad4j.desktop;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import org.gamepad4j.ButtonID;
 import org.gamepad4j.ControllerListenerSupport;
+import org.gamepad4j.IController;
 import org.gamepad4j.IControllerListener;
 import org.gamepad4j.IControllerProvider;
+import org.gamepad4j.IStick;
+import org.gamepad4j.StickID;
+import org.gamepad4j.base.BaseAxis;
+import org.gamepad4j.base.BaseButton;
+import org.gamepad4j.base.BaseStick;
+import org.gamepad4j.desktop.Gamepad.Device;
 import org.gamepad4j.desktop.Gamepad.GamepadListener;
 
 
@@ -29,158 +35,95 @@ public class DesktopControllerProvider implements IControllerProvider {
     /** Stores controller listener support. */
     private final ControllerListenerSupport listenerSupport = new ControllerListenerSupport();
 
-    public static NativeGamepad nativeGamepad = null;
+    /** native */
+    private final Gamepad gamepad;
 
     /** Map of all connected controllers (deviceID / controller). */
     private static final Map<Integer, DesktopController> connected = new HashMap<>();
 
-    /** Stores the controllers instance pool. */
-    private static final DesktopController[] controllerPool = new DesktopController[16];
-
-    /** Stores the number of connected controllers. */
-    private static int numberOfControllers = -1;
+    public DesktopControllerProvider() {
+        gamepad = Gamepad.getGamepad();
+    }
 
     @Override
     public void initialize() {
-        nativeGamepad = new NativeGamepad();
-        // i couldn't find code do this in the original code. how do i do this?
-        nativeGamepad.setGamepadListener(new GamepadListener() {
+        logger.fine("initialize: native...: " + gamepad.getClass().getName());
+        gamepad.open();
+        logger.fine("initialize: done.");
+        gamepad.addGamepadListener(new GamepadListener() {
             @Override
-            public void deviceAttach(Gamepad.Device device) {
-logger.fine("deviceAttach:");
-                listenerSupport.fireConnected(connected.get(device.deviceID));
+            public void deviceAttach(Device device) {
+logger.finer("deviceAttach: " + device.deviceID);
+                DesktopController controller = new DesktopController(device);
+
+                listenerSupport.fireConnected(controller);
+
+                connected.put(device.deviceID, controller);
+logger.info(String.format("newly connected controller found: %d (%x/%x) / %s",
+        controller.getDeviceID(),
+        controller.getVendorID(),
+        controller.getProductID(),
+        controller.getDescription()));
             }
 
             @Override
-            public void deviceRemove(Gamepad.Device device) {
-logger.fine("deviceRemove:");
-                listenerSupport.fireDisconnected(connected.get(device.deviceID));
+            public void deviceRemove(Device device) {
+                if (connected.isEmpty() || connected.get(device.deviceID) == null) {
+logger.finer("deviceRemove: " + connected + ", " + device.deviceID);
+                    return;
+                }
+                DesktopController controller = connected.get(device.deviceID);
+
+                listenerSupport.fireDisconnected(controller);
+
+                connected.remove(device.deviceID);
             }
 
             @Override
-            public void buttonDown(Gamepad.Device device, int buttonID, double timestamp) {
-logger.fine("buttonDown:");
-                listenerSupport.fireButtonDown(connected.get(device.deviceID), null, null);
+            public void buttonDown(Device device, int buttonID, double timestamp) {
+                if (connected.isEmpty() || connected.get(device.deviceID) == null) {
+logger.finer("buttonDown: " + connected + ", " + device.deviceID);
+                    return;
+                }
+                DesktopController controller = connected.get(device.deviceID);
+
+                BaseButton button = (BaseButton) controller.getButton(buttonID);
+                button.setPressed(true);
+                listenerSupport.fireButtonDown(controller, button, ButtonID.UNKNOWN);
             }
 
             @Override
-            public void buttonUp(Gamepad.Device device, int buttonID, double timestamp) {
-logger.fine("buttonUp:");
-                listenerSupport.fireButtonUp(connected.get(device.deviceID), null, null);
+            public void buttonUp(Device device, int buttonID, double timestamp) {
+                if (connected.isEmpty() || connected.get(device.deviceID) == null) {
+logger.finer("buttonUp: " + connected + ", " + device.deviceID);
+                    return;
+                }
+                DesktopController controller = connected.get(device.deviceID);
+
+                BaseButton button = (BaseButton) controller.getButton(buttonID);
+                button.setPressed(false);
+                listenerSupport.fireButtonUp(controller, button, ButtonID.UNKNOWN);
             }
 
             @Override
-            public void axisMove(Gamepad.Device device, int axisID, float value, double timestamp) {
-logger.fine("axisMove:");
-                listenerSupport.fireMoveStick(connected.get(device.deviceID), null);
+            public void axisMove(Device device, int axisID, float value, double timestamp) {
+                if (connected.isEmpty() || connected.get(device.deviceID) == null) {
+logger.finer("axisMove: " + connected + ", " + device.deviceID);
+                    return;
+                }
+                DesktopController controller = connected.get(device.deviceID);
+
+//                BaseAxis axes = (BaseAxis) controller.getAxes()[axisID];
+//                axes.setValue(value);
+                listenerSupport.fireMoveStick(controller, StickID.UNKNOWN);
             }
         });
-        for (int i = 0; i < controllerPool.length; i++) {
-            controllerPool[i] = new DesktopController(-1);
-        }
     }
 
     @Override
     public void release() {
-        nativeGamepad.close();
-    }
-
-    /**
-     * Returns a controller holder instance from the pool and
-     * sets its code to the given value.
-     *
-     * @param index The code to set for the controller instance.
-     * @return The controller holder (or null if there was none free).
-     */
-    private synchronized static DesktopController getInstanceFromPool(int index) {
-        for (int i = 0; i < controllerPool.length; i++) {
-            if (controllerPool[i] != null) {
-                DesktopController reference = controllerPool[i];
-                reference.setIndex(index);
-//				connected.put(code, reference);
-                controllerPool[i] = null;
-                return reference;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns the given controller instance to the pool.
-     *
-     * @param controller The controller instance to return (must not be null).
-     */
-    private synchronized static void returnInstanceToPool(DesktopController controller) {
-        for (int i = 0; i < controllerPool.length; i++) {
-            if (controllerPool[i] == null) {
-                controllerPool[i] = controller;
-            }
-        }
-    }
-
-    @Override
-    public synchronized void checkControllers() {
-        nativeGamepad.detectPads();
-        for (DesktopController controller : connected.values()) {
-            controller.setChecked(false);
-        }
-
-        float value = nativeGamepad.getControllerAxisState(0, 8);
-        logger.finer(">> Axis 8: " + value);
-
-        // 1st check which controllers are (still) connected
-        int newNumberOfControllers = nativeGamepad.getNumberOfPads();
-        if (newNumberOfControllers != numberOfControllers) {
-            numberOfControllers = newNumberOfControllers;
-            logger.fine("Number of controllers: " + numberOfControllers);
-        }
-        logger.finest("Check for newly connected controllers...");
-        for (int ct = 0; ct < numberOfControllers; ct++) {
-            int connectedId = nativeGamepad.getDeviceID(ct);
-            if (connectedId != -1) {
-                DesktopController controller = connected.get(connectedId);
-                if (controller != null) {
-                    controller.setChecked(true);
-                } else {
-                    DesktopController newController = getInstanceFromPool(ct);
-                    if (newController == null) {
-                        throw new IllegalStateException("** DesktopController instance pool exceeded! **");
-                    }
-                    newController.setChecked(true);
-                    nativeGamepad.updateControllerInfo(newController);
-                    DesktopControllerProvider.connected.put(newController.getDeviceID(), newController);
-                    logger.info("***********************************************************************");
-                    logger.info("Newly connected controller found: " + newController.getDeviceID()
-                            + " (" + Integer.toHexString(newController.getVendorID()) + "/"
-                            + Integer.toHexString(newController.getProductID())
-                            + ") / " + newController.getDescription());
-                    logger.info("***********************************************************************");
-                    listenerSupport.fireConnected(newController);
-                }
-            }
-        }
-
-        // 2nd remove the controllers not found in the first loop
-        logger.finest("Check for disconnected controllers...");
-        Iterator<Entry<Integer, DesktopController>> iter = connected.entrySet().iterator();
-        while (iter.hasNext()) {
-            Entry<Integer, DesktopController> entry = iter.next();
-            DesktopController controller = entry.getValue();
-            if (!controller.isChecked()) {
-                logger.info("Controller disconnected: " + controller.getDeviceID() + " / " + controller.getDescription());
-                listenerSupport.fireDisconnected(controller);
-                returnInstanceToPool(controller);
-                // Must be removed from map with iterator, otherwise
-                // ConcurrentModificationException will occur
-                iter.remove();
-            }
-        }
-
-        // 3rd update the state of all remaining controllers
-        logger.finest("Update controllers...");
-        for (DesktopController controller : connected.values()) {
-            nativeGamepad.updateControllerStatus(controller);
-        }
+        logger.fine("Shutdown native Gamepad API.");
+        gamepad.close();
     }
 
     @Override
@@ -195,6 +138,11 @@ logger.fine("axisMove:");
 
     @Override
     public boolean isSupported() {
-        return true; // TODO
+        return true; // desktop is always available.
+    }
+
+    @Override
+    public IController[] getControllers() {
+        return connected.values().toArray(IController[]::new);
     }
 }

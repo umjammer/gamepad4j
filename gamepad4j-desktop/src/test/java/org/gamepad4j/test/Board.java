@@ -4,20 +4,18 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 
+import org.gamepad4j.ButtonID;
 import org.gamepad4j.Controllers;
 import org.gamepad4j.DpadDirection;
+import org.gamepad4j.IButton;
 import org.gamepad4j.IController;
+import org.gamepad4j.IControllerListener.IControllerAdapter;
 import org.gamepad4j.IStick;
 import org.gamepad4j.StickID;
 import org.gamepad4j.StickPosition;
-import vavi.util.Debug;
 
 
 /**
@@ -28,14 +26,13 @@ import vavi.util.Debug;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public class Board extends JPanel implements ActionListener, Runnable {
+public class Board extends JPanel {
 
     static final Logger logger = Logger.getLogger(Board.class.getName());
 
-    private Timer timer;
     private Craft craft;
 
-    Controllers environment;
+    private Controllers environment;
 
     public Board() {
 
@@ -49,12 +46,63 @@ public class Board extends JPanel implements ActionListener, Runnable {
 
         craft = new Craft();
 
-        timer = new Timer(5, this);
-        timer.start();
+        if (environment.getControllers().length == 0) {
+            throw new IllegalStateException("no controller");
+        }
+        environment.addListener(new IControllerAdapter() {
 
-        Thread runner = new Thread(this);
-        runner.setDaemon(true);
-        runner.start();
+            @Override
+            public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
+logger.fine("buttonDown: " + controller + ", " + button + ", " + buttonID);
+                DpadDirection dpadDirection = controller.getDpadDirection();
+                if (dpadDirection == DpadDirection.UP) {
+                    craft.goUp();
+                    move();
+                } else if (dpadDirection == DpadDirection.DOWN) {
+                    craft.goDown();
+                    move();
+                } else if (dpadDirection == DpadDirection.LEFT) {
+                    craft.goLeft();
+                    move();
+                } else if (dpadDirection == DpadDirection.RIGHT) {
+                    craft.goRight();
+                    move();
+                }
+            }
+
+            @Override
+            public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
+logger.fine("buttonUp: " + controller + ", " + button + ", " + buttonID);
+            }
+
+            @Override
+            public void moveStick(IController controller, StickID stick) {
+logger.finer("moveStick: " + controller + ", " + stick);
+                IStick leftStick = controller.getStick(StickID.LEFT);
+                if (leftStick != null) {
+                    StickPosition leftStickPosition = leftStick.getPosition();
+                    if (!leftStickPosition.isStickCentered()) {
+                        logger.fine("Stick degree: " + leftStickPosition.getDegree());
+                    }
+                    // Get direction from left analog stick as if it were a digital pad
+                    // (no degree / speed calculations here, because I'm too lazy)
+                    DpadDirection mainDirection = leftStickPosition.getDirection();
+                    if (mainDirection == DpadDirection.UP) {
+                        craft.goUp();
+                        move();
+                    } else if (mainDirection == DpadDirection.DOWN) {
+                        craft.goDown();
+                        move();
+                    } else if (mainDirection == DpadDirection.LEFT) {
+                        craft.goLeft();
+                        move();
+                    } else if (mainDirection == DpadDirection.RIGHT) {
+                        craft.goRight();
+                        move();
+                    }
+                }
+            }
+        });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.fine("Shutdown Gamepad API");
@@ -73,76 +121,12 @@ public class Board extends JPanel implements ActionListener, Runnable {
         g.dispose();
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
+    void move() {
         craft.move();
         repaint();
     }
 
-    int c = 0;
-
-    /**
-     * Gamepad state checking loop (equates typical game main loop)
-     */
-    @Override
-    public void run() {
-        while (true) {
-try {
-            // Poll the state of the controllers
-            environment.checkControllers();
-            IController[] gamepads = environment.getControllers();
-            if (gamepads.length > 0) {
-                boolean moving = false;
-
-                IController mainController = gamepads[0];
-                DpadDirection dpadDirection = mainController.getDpadDirection();
-                if (dpadDirection == DpadDirection.UP) {
-                    craft.goUp();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.DOWN) {
-                    craft.goDown();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.LEFT) {
-                    craft.goLeft();
-                    moving = true;
-                } else if (dpadDirection == DpadDirection.RIGHT) {
-                    craft.goRight();
-                    moving = true;
-                }
-
-logger.finer("controller: " + mainController + ", " + Arrays.toString(mainController.getSticks()));
-                IStick leftStick = mainController.getStick(StickID.LEFT);
-                if (leftStick != null) {
-                    StickPosition leftStickPosition = leftStick.getPosition();
-                    if (!leftStickPosition.isStickCentered()) {
-                        logger.fine("Stick degree: " + leftStickPosition.getDegree());
-                    }
-                    // Get direction from left analog stick as if it were a digital pad
-                    // (no degree / speed calculations here, because I'm too lazy)
-                    DpadDirection mainDirection = leftStickPosition.getDirection();
-                    if (mainDirection == DpadDirection.UP) {
-                        craft.goUp();
-                        moving = true;
-                    } else if (mainDirection == DpadDirection.DOWN) {
-                        craft.goDown();
-                        moving = true;
-                    } else if (mainDirection == DpadDirection.LEFT) {
-                        craft.goLeft();
-                        moving = true;
-                    } else if (mainDirection == DpadDirection.RIGHT) {
-                        craft.goRight();
-                        moving = true;
-                    }
-                }
-                if (!moving) {
-                    craft.stopMoving();
-                }
-            }
-} catch (Exception e) {
- Debug.printStackTrace(e);
- c++;
- assert c < 10 : "too many errors";
-}
-        }
-    }
+//                if (!moving) {
+//                    craft.stopMoving();
+//                }
 }

@@ -15,6 +15,7 @@ import org.gamepad4j.base.BaseAxis;
 import org.gamepad4j.base.BaseButton;
 import org.gamepad4j.base.BaseStick;
 import org.gamepad4j.base.BaseTrigger;
+import org.gamepad4j.desktop.Gamepad.Device;
 import org.gamepad4j.desktop.Mapping.MappingType;
 
 
@@ -32,10 +33,7 @@ public class DesktopController extends AbstractBaseController {
     public static final float DEFAULT_DEADZONE = 0.1f;
 
     /** Stores the controller code value. */
-    private int index = -1;
-
-    /** Flag for tracking check status. */
-    private boolean checked = false;
+    private final Device device;
 
     /** Default deadzone value. */
     private float defaultDeadZone = DEFAULT_DEADZONE;
@@ -43,13 +41,19 @@ public class DesktopController extends AbstractBaseController {
     /**
      * Creates a desktop controller holder for a certain code.
      *
-     * @param index The index number of the controller.
+     * @param device The device number of the controller.
      */
-    public DesktopController(int index) {
+    public DesktopController(Device device) {
         // For now, create instance with "wrong" device ID 0.
         // Real value will be updated later through setter method.
-        super(0);
-        this.index = index;
+        super(device.deviceID);
+        this.device = device;
+        this.setDescription(device.description);
+        this.setVendorID(device.vendorID);
+        this.setProductID(device.productID);
+        this.initializeMapping();
+        this.createButtons(device.numButtons);
+        this.createAxes(device.numAxes);
     }
 
     /**
@@ -67,35 +71,13 @@ public class DesktopController extends AbstractBaseController {
     }
 
     /**
-     * @return the checked
-     */
-    public boolean isChecked() {
-        return checked;
-    }
-
-    /**
-     * @param checked the checked to set
-     */
-    public void setChecked(boolean checked) {
-        this.checked = checked;
-    }
-
-    /**
      * Returns the code value of this desktop controller holder.
      *
      * @return The code value.
      */
-    public int getIndex() {
-        return this.index;
-    }
-
-    /**
-     * Sets the code for this controller holder.
-     *
-     * @param index The code value.
-     */
-    public void setIndex(int index) {
-        this.index = index;
+    @Override
+    public int getDeviceID() {
+        return this.deviceID;
     }
 
     /**

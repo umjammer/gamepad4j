@@ -26,14 +26,6 @@ public interface IControllerProvider {
     void release();
 
     /**
-     * Checks the state of all controllers. This method is
-     * invoked by the update-thread which may be used if the
-     * underlying implementation does not support the callback
-     * listeners.
-     */
-    void checkControllers();
-
-    /**
      * Registers a listener for controller events.
      *
      * @param listener The controller listener.
@@ -47,6 +39,13 @@ public interface IControllerProvider {
      */
     void removeListener(IControllerListener listener);
 
-    /** */
+    /** Is used at {@link Controllers} constructor. */
     boolean isSupported();
+
+    /**
+     * Returns all the available controllers.
+     *
+     * @return The available controllers.
+     */
+    IController[] getControllers();
 }
