@@ -9,6 +9,8 @@ package org.gamepad4j.util;
 import java.lang.reflect.Field;
 import java.util.logging.Logger;
 
+import com.jogamp.common.os.Platform;
+
 
 /**
  * OS-/Platform-related utility functionality.
@@ -31,45 +33,16 @@ public class PlatformUtil {
      *
      * @return The platform type.
      */
-    public static Platform getPlatform() {
-        if (isOuya()) {
-            return Platform.ouya;
-        }
+    public static String getPlatform() {
         if (isMac()) {
-            return Platform.macos;
+            return "macos";
+        } else if (isWindows()) {
+            return "windows";
+        } else  if (isLinux()) {
+            return "linux";
+        } else {
+            return "unknown";
         }
-        if (isWindows()) {
-            return Platform.windows;
-        }
-        if (isLinux()) {
-            return Platform.linux;
-        }
-        return Platform.unknown;
-    }
-
-    /**
-     * Check if game runs on OUYA.
-     *
-     * @return True if it's running on OUYA.
-     */
-    public static boolean isOuya() {
-        if (isOuya == null) {
-            try {
-                logger.finer("checking ouya...");
-                Class<?> buildClass = Class.forName("android.os.Build");
-                logger.fine("Create class 'android.os.Build'");
-                Field deviceField = buildClass.getDeclaredField("DEVICE");
-                Object device = deviceField.get(null);
-                logger.fine("Device Type: '" + device + "'");
-                String deviceName = device.toString().trim().toLowerCase();
-                isOuya = deviceName.contains("ouya");
-                logger.fine("is OUYA: " + isOuya);
-            } catch (Exception e) {
-                logger.finer("checking ouya: NO");
-                return false;
-            }
-        }
-        return isOuya;
     }
 
     /**

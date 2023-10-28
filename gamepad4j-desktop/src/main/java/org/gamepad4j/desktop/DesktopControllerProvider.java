@@ -10,9 +10,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import org.gamepad4j.ControllerListenerAdapter;
+import org.gamepad4j.ControllerListenerSupport;
 import org.gamepad4j.IControllerListener;
 import org.gamepad4j.IControllerProvider;
+import org.gamepad4j.desktop.Gamepad.GamepadListener;
 
 
 /**
@@ -23,10 +24,10 @@ import org.gamepad4j.IControllerProvider;
  */
 public class DesktopControllerProvider implements IControllerProvider {
 
-    static final Logger logger = Logger.getLogger(DesktopControllerProvider.class.getName());
+    private static final Logger logger = Logger.getLogger(DesktopControllerProvider.class.getName());
 
-    /** Stores controller listeners. */
-    private final ControllerListenerAdapter listeners = new ControllerListenerAdapter();
+    /** Stores controller listener support. */
+    private final ControllerListenerSupport listenerSupport = new ControllerListenerSupport();
 
     public static NativeGamepad nativeGamepad = null;
 
@@ -42,11 +43,41 @@ public class DesktopControllerProvider implements IControllerProvider {
     @Override
     public void initialize() {
         nativeGamepad = new NativeGamepad();
-        nativeGamepad.initialize();
+        // i couldn't find code do this in the original code. how do i do this?
+        nativeGamepad.setGamepadListener(new GamepadListener() {
+            @Override
+            public void deviceAttach(Gamepad.Device device) {
+logger.fine("deviceAttach:");
+                listenerSupport.fireConnected(connected.get(device.deviceID));
+            }
+
+            @Override
+            public void deviceRemove(Gamepad.Device device) {
+logger.fine("deviceRemove:");
+                listenerSupport.fireDisconnected(connected.get(device.deviceID));
+            }
+
+            @Override
+            public void buttonDown(Gamepad.Device device, int buttonID, double timestamp) {
+logger.fine("buttonDown:");
+                listenerSupport.fireButtonDown(connected.get(device.deviceID), null, null);
+            }
+
+            @Override
+            public void buttonUp(Gamepad.Device device, int buttonID, double timestamp) {
+logger.fine("buttonUp:");
+                listenerSupport.fireButtonUp(connected.get(device.deviceID), null, null);
+            }
+
+            @Override
+            public void axisMove(Gamepad.Device device, int axisID, float value, double timestamp) {
+logger.fine("axisMove:");
+                listenerSupport.fireMoveStick(connected.get(device.deviceID), null);
+            }
+        });
         for (int i = 0; i < controllerPool.length; i++) {
             controllerPool[i] = new DesktopController(-1);
         }
-        System.out.flush();
     }
 
     @Override
@@ -124,7 +155,7 @@ public class DesktopControllerProvider implements IControllerProvider {
                             + Integer.toHexString(newController.getProductID())
                             + ") / " + newController.getDescription());
                     logger.info("***********************************************************************");
-                    listeners.getListeners().get(0).connected(newController);
+                    listenerSupport.fireConnected(newController);
                 }
             }
         }
@@ -137,7 +168,7 @@ public class DesktopControllerProvider implements IControllerProvider {
             DesktopController controller = entry.getValue();
             if (!controller.isChecked()) {
                 logger.info("Controller disconnected: " + controller.getDeviceID() + " / " + controller.getDescription());
-                listeners.getListeners().get(0).disConnected(controller);
+                listenerSupport.fireDisconnected(controller);
                 returnInstanceToPool(controller);
                 // Must be removed from map with iterator, otherwise
                 // ConcurrentModificationException will occur
@@ -154,11 +185,16 @@ public class DesktopControllerProvider implements IControllerProvider {
 
     @Override
     public void addListener(IControllerListener listener) {
-        this.listeners.addListener(listener);
+        this.listenerSupport.addListener(listener);
     }
 
     @Override
     public void removeListener(IControllerListener listener) {
-        this.listeners.removeListener(listener);
+        this.listenerSupport.removeListener(listener);
+    }
+
+    @Override
+    public boolean isSupported() {
+        return true; // TODO
     }
 }

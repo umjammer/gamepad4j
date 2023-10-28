@@ -34,23 +34,29 @@ import org.gamepad4j.StickID;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public class MappingToolWindow extends JFrame implements IControllerListener {
+public class MappingToolWindow extends JFrame {
 
-    static final Logger logger = Logger.getLogger(MappingToolWindow.class.getName());
+    private static final Logger logger = Logger.getLogger(MappingToolWindow.class.getName());
 
     /** Stores ImageIcon instances for various pads. */
     public static Map<Long, ImageIcon> padImageMap = new HashMap<>();
 
-    private static int numberOfPads = 0;
+    private Controllers environment;
 
     public MappingToolWindow() {
 
         // Initial gamepad detection
-        Controllers.initialize();
+        environment = Controllers.instance();
 
         setTitle("Gamepad4J Test Program");
         setSize(400, 500);
-        addWindowListener(new TestWindowListener());
+        addWindowListener(new WindowAdapter() {
+            @Override public void windowClosing(WindowEvent e) {
+                GamepadCheck.running = false;
+                environment.shutdown();
+                e.getWindow().dispose();
+            }
+        });
         getContentPane().setLayout(new FlowLayout());
         try {
             InputStream in = MappingToolWindow.class.getResourceAsStream("/image-filenames.properties");
@@ -86,61 +92,38 @@ public class MappingToolWindow extends JFrame implements IControllerListener {
             throw new IllegalStateException(e);
         }
 
-        Controllers.instance().addListener(this);
+        environment.addListener(new IControllerListener() {
+            @Override public void connected(IController controller) {
+                System.out.println(">> Gamepad connected.");
+                updateWindow();
+            }
 
-        // Build window content
-//		updateWindow();
+            @Override public void disConnected(IController controller) {
+                System.out.println(">> Gamepad disconnected.");
+                updateWindow();
+            }
+
+            @Override public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
+                System.out.println(">> button down");
+            }
+
+            @Override public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
+                System.out.println(">> button up");
+            }
+
+            @Override public void moveStick(IController controller, StickID stick) {
+                System.out.println(">> move stick");
+            }
+        });
     }
 
     private void updateWindow() {
         System.out.println("--- controller change, update window ---");
         getContentPane().removeAll();
-//		Controllers.checkControllers();
-        IController[] controllers = Controllers.getControllers();
-        numberOfPads = controllers.length;
-        for (int i = 0; i < numberOfPads; i++) {
-            getContentPane().add(new ControllerPanel(controllers[i]));
+        IController[] controllers = environment.getControllers();
+        for (IController controller : controllers) {
+            getContentPane().add(new ControllerPanel(controller));
         }
         pack();
-    }
-
-    @Override
-    public void connected(IController controller) {
-        System.out.println(">> Gamepad connected.");
-        updateWindow();
-    }
-
-    @Override
-    public void disConnected(IController controller) {
-        System.out.println(">> Gamepad disconnected.");
-        updateWindow();
-    }
-
-    @Override
-    public void buttonDown(IController controller, IButton button,
-                           ButtonID buttonID) {
-        System.out.println(">> button down");
-    }
-
-    @Override
-    public void buttonUp(IController controller, IButton button,
-                         ButtonID buttonID) {
-        System.out.println(">> button up");
-    }
-
-    @Override
-    public void moveStick(IController controller, StickID stick) {
-        System.out.println(">> move stick");
-    }
-
-
-    static class TestWindowListener extends WindowAdapter {
-
-        @Override
-        public void windowClosing(WindowEvent e) {
-            GamepadCheck.running = false;
-            Controllers.shutdown();
-            e.getWindow().dispose();
-        }
     }
 }

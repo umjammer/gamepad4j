@@ -29,8 +29,9 @@ import com.sun.jna.ptr.IntByReference;
 import net.java.games.input.windows.User32Ex;
 import net.java.games.input.windows.User32Ex.JOYCAPS;
 import net.java.games.input.windows.User32Ex.JOYINFOEX;
-import org.gamepad4j.shared.BaseGamepad;
-import org.gamepad4j.shared.Gamepad.Device.Private;
+import org.gamepad4j.desktop.BaseGamepad;
+import org.gamepad4j.desktop.Gamepad.Device.Private;
+import org.gamepad4j.util.PlatformUtil;
 
 import static com.sun.jna.platform.win32.WinError.ERROR_SUCCESS;
 import static com.sun.jna.platform.win32.WinNT.KEY_READ;
@@ -394,5 +395,10 @@ public class WindowsGamepad extends BaseGamepad {
             }
         }
         inProcessEvents = false;
+    }
+
+    @Override
+    public boolean isSupported() {
+        return PlatformUtil.isWindows();
     }
 }

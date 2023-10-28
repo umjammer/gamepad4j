@@ -34,10 +34,12 @@ public class GamepadCheck implements Runnable {
 
     @Override
     public void run() {
+        Controllers environment = Controllers.instance();
+
         while (running) {
             // This is basically what you would do in your game's main loop
-            Controllers.checkControllers();
-            IController[] controllers = Controllers.getControllers();
+            environment.checkControllers();
+            IController[] controllers = environment.getControllers();
             if (controllers != null && controllers.length > 0) {
                 IButton acceptButton = controllers[0].getButton(ButtonID.FACE_DOWN);
                 if (acceptButton != null && acceptButton.isPressedOnce()) {

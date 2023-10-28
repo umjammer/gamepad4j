@@ -20,7 +20,10 @@
 
 package org.gamepad4j.macos;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +34,8 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.NativeLongByReference;
-import org.gamepad4j.shared.BaseGamepad;
+import org.gamepad4j.desktop.BaseGamepad;
+import org.gamepad4j.util.PlatformUtil;
 import vavix.rococoa.corefoundation.CFArray;
 import vavix.rococoa.corefoundation.CFDictionary;
 import vavix.rococoa.corefoundation.CFIndex;
@@ -42,7 +46,7 @@ import vavix.rococoa.corefoundation.CFString;
 import vavix.rococoa.corefoundation.CFType;
 import vavix.rococoa.iokit.IOKitLib;
 
-import static org.gamepad4j.shared.Gamepad.EventType.DEVICE_ATTACHED;
+import static org.gamepad4j.desktop.Gamepad.EventType.DEVICE_ATTACHED;
 import static vavix.rococoa.corefoundation.CFAllocator.kCFAllocatorDefault;
 import static vavix.rococoa.corefoundation.CFLib.CFNumberType.kCFNumberSInt32Type;
 import static vavix.rococoa.corefoundation.CFLib.kCFRunLoopDefaultMode;
@@ -72,7 +76,7 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDVendorIDKey;
  */
 public class MacosxGamepad extends BaseGamepad {
 
-    private static class mach_timebase_info {
+    private static class MachTimebaseInfo {
 
         public long numer;
         public long denom;
@@ -101,18 +105,13 @@ public class MacosxGamepad extends BaseGamepad {
     }
 
     private Pointer /* IOHIDManagerRef */ hidManager = null;
-    private Device[] devices = null;
-    private int numDevices = 0;
+    private List<Device> devices = new ArrayList<>();
     private int nextDeviceID = 0;
 
-    private QueuedEvent[] inputEventQueue = null;
-    private int inputEventQueueSize = 0;
-    private int inputEventCount = 0;
+    private final Deque<QueuedEvent> inputEventQueue = new ArrayDeque<>();
+    private final Deque<QueuedEvent> deviceEventQueue = new ArrayDeque<>();
 
-    private QueuedEvent[] deviceEventQueue = null;
-    private int deviceEventQueueSize = 0;
-    private int deviceEventCount = 0;
-
+    /** */
     private static void hatValueToXY(int value, int range, int[] outX, int[] outY) {
         if (value == range) {
             outX[0] = outY[0] = 0;
@@ -146,11 +145,7 @@ public class MacosxGamepad extends BaseGamepad {
         queuedEvent.eventType = eventType;
         queuedEvent.eventData = eventData;
 
-        if (inputEventCount >= inputEventQueueSize) {
-            inputEventQueueSize = inputEventQueueSize == 0 ? 1 : inputEventQueueSize * 2;
-            inputEventQueue = new QueuedEvent[inputEventQueueSize];
-        }
-        inputEventQueue[inputEventCount++] = queuedEvent;
+        inputEventQueue.offer(queuedEvent);
     }
 
     /** a callback when a device value changed */
@@ -160,11 +155,12 @@ if (device == null) {
  logger.fine("device is null");
  return;
 }
+logger.fine("onDeviceValueChanged");
         DevicePrivate hidDeviceRecord = (DevicePrivate) device.privateData;
         Pointer /* IOHIDElementRef */ element = IOKitLib.INSTANCE.IOHIDValueGetElement(value);
         int /* IOHIDElementCookie */ cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
 
-        mach_timebase_info timebaseInfo = new mach_timebase_info();
+        MachTimebaseInfo timebaseInfo = new MachTimebaseInfo();
 
         if (timebaseInfo.denom == 0) {
             long t = System.nanoTime();
@@ -174,15 +170,13 @@ if (device == null) {
 
         for (int axisIndex = 0; axisIndex < device.numAxes; axisIndex++) {
             HIDGamepadAxis axisElement = hidDeviceRecord.axisElements.get(axisIndex);
-            if (!axisElement.isHatSwitchSecondAxis &&
-                    axisElement.cookie == cookie) {
-                int integerValue;
+            if (!axisElement.isHatSwitchSecondAxis && axisElement.cookie == cookie) {
 
                 if (IOKitLib.INSTANCE.IOHIDValueGetLength(value).intValue() > 4) {
                     // Workaround for a strange crash that occurs with PS3 controller; was getting lengths of 39 (!)
                     continue;
                 }
-                integerValue = IOKitLib.INSTANCE.IOHIDValueGetIntegerValue(value).intValue();
+                int integerValue = IOKitLib.INSTANCE.IOHIDValueGetIntegerValue(value).intValue();
 
                 if (axisElement.isHatSwitch) {
                     int[] x = new int[1], y = new int[1];
@@ -279,8 +273,7 @@ logger.finer("CHECKPOINT-4.S");
         device.numAxes = 0;
         device.numButtons = 0;
 
-        devices = new Device[numDevices + 1];
-        devices[numDevices++] = device;
+        devices.add(device);
 
         DevicePrivate hidDeviceRecord = new DevicePrivate();
         hidDeviceRecord.deviceRef = deviceRef;
@@ -309,8 +302,7 @@ logger.finer("CHECKPOINT-4.1: " + description);
             int /* IOHIDElementType */ type = IOKitLib.INSTANCE.IOHIDElementGetType(element);
 
             // All of the axis elements I've ever detected have been kIOHIDElementTypeInput_Misc. kIOHIDElementTypeInput_Axis is only included for good faith...
-            if (type == kIOHIDElementTypeInput_Misc ||
-                    type == kIOHIDElementTypeInput_Axis) {
+            if (type == kIOHIDElementTypeInput_Misc || type == kIOHIDElementTypeInput_Axis) {
 
                 HIDGamepadAxis axisElement = new HIDGamepadAxis();
                 axisElement.cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
@@ -349,67 +341,39 @@ logger.finer("CHECKPOINT-4.1: " + description);
         queuedEvent.eventType = DEVICE_ATTACHED;
         queuedEvent.eventData = device;
 
-        if (deviceEventCount >= deviceEventQueueSize) {
-            deviceEventQueueSize = deviceEventQueueSize == 0 ? 1 : deviceEventQueueSize * 2;
-            deviceEventQueue = new QueuedEvent[deviceEventQueueSize];
-        }
-        deviceEventQueue[deviceEventCount++] = queuedEvent;
+        deviceEventQueue.offer(queuedEvent);
 logger.finer("CHECKPOINT-4.E");
     }
 
     /** */
     private void disposeDevice(Device deviceRecord) {
-        int inputEventIndex, deviceEventIndex;
-
         IOKitLib.INSTANCE.IOHIDDeviceRegisterInputValueCallback(((DevicePrivate) deviceRecord.privateData).deviceRef, null, null);
 
-        for (inputEventIndex = 0; inputEventIndex < inputEventCount; inputEventIndex++) {
-            if (inputEventQueue[inputEventIndex].deviceID == deviceRecord.deviceID) {
-                int inputEventIndex2;
-
-                inputEventCount--;
-                for (inputEventIndex2 = inputEventIndex; inputEventIndex2 < inputEventCount; inputEventIndex2++) {
-                    inputEventQueue[inputEventIndex2] = inputEventQueue[inputEventIndex2 + 1];
-                }
-                inputEventIndex--;
-            }
-        }
-
-        for (deviceEventIndex = 0; deviceEventIndex < deviceEventCount; deviceEventIndex++) {
-            if (deviceEventQueue[deviceEventIndex].deviceID == deviceRecord.deviceID) {
-                int deviceEventIndex2;
-
-                deviceEventCount--;
-                for (deviceEventIndex2 = deviceEventIndex; deviceEventIndex2 < deviceEventCount; deviceEventIndex2++) {
-                    deviceEventQueue[deviceEventIndex2] = deviceEventQueue[deviceEventIndex2 + 1];
-                }
-                deviceEventIndex--;
-            }
-        }
+        inputEventQueue.clear();
+        deviceEventQueue.clear();
     }
 
     /** */
-    private void onDeviceRemoved(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ device) {
-logger.fine("onDeviceRemoved: " + device);
-        for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
-            if (((DevicePrivate) devices[deviceIndex].privateData).deviceRef == device) {
-                fireDeviceRemove(devices[deviceIndex]);
+    private void onDeviceRemoved(Pointer context, int /* IOReturn */ result, Pointer sender, Pointer /* IOHIDDeviceRef */ deviceRef) {
+logger.fine("onDeviceRemoved: " + deviceRef);
+        Iterator<Device> deviceIndex = devices.iterator();
+        while (deviceIndex.hasNext()) {
+            Device device = deviceIndex.next();
+            if (((DevicePrivate) device.privateData).deviceRef == deviceRef) {
+                fireDeviceRemove(device);
 
-                disposeDevice(devices[deviceIndex]);
-                numDevices--;
-                for (; deviceIndex < numDevices; deviceIndex++) {
-                    devices[deviceIndex] = devices[deviceIndex + 1];
-                }
+                disposeDevice(device);
+                deviceIndex.remove();
                 return;
             }
         }
     }
 
     /** */
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     /** */
-    private CountDownLatch cdl = new CountDownLatch(1);
+    private final CountDownLatch cdl = new CountDownLatch(1);
 
     @Override
     public void init() {
@@ -471,10 +435,10 @@ logger.finer("CHECKPOINT-0.S");
             IOKitLib.INSTANCE.IOHIDManagerRegisterDeviceRemovalCallback(hidManager, this::onDeviceRemoved, null);
 
             cdl.countDown();
-logger.fine("CHECKPOINT-0.8: bye...");
+logger.finer("CHECKPOINT-0.8: bye...");
 
             CFLib.INSTANCE.CFRunLoopRun();
-logger.fine("CHECKPOINT-0.E");
+logger.finer("CHECKPOINT-0.E");
         }
     }
 
@@ -489,27 +453,26 @@ logger.fine("i am a mac, bye");
             CFLib.INSTANCE.CFRelease(hidManager);
             hidManager = null;
 
-            for (int deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
-                disposeDevice(devices[deviceIndex]);
+            for (Device device : devices) {
+                disposeDevice(device);
             }
-            devices = null;
-            numDevices = 0;
+            devices.clear();
         }
     }
 
     @Override
     public int numDevices() {
 logger.finer("CHECKPOINT-3.0");
-        return numDevices;
+        return devices.size();
     }
 
     @Override
     public Device deviceAtIndex(int deviceIndex) {
-        if (deviceIndex >= numDevices) {
-logger.warning(deviceIndex + " >= " + numDevices);
+        if (deviceIndex >= devices.size()) {
+logger.warning(deviceIndex + " >= " + devices.size());
             return null;
         }
-        return devices[deviceIndex];
+        return devices.get(deviceIndex);
     }
 
     @Override
@@ -518,11 +481,10 @@ logger.warning(deviceIndex + " >= " + numDevices);
 logger.fine("detectDevices: hidManager is null");
             return;
         }
-logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
-        for (int eventIndex = 0; eventIndex < deviceEventCount; eventIndex++) {
-            processQueuedEvent(deviceEventQueue[eventIndex]);
+logger.finer("detectDevices: deviceEventCount: " + deviceEventQueue.size());
+        for (int eventIndex = 0; eventIndex < deviceEventQueue.size(); eventIndex++) {
+            processQueuedEvent(deviceEventQueue.poll());
         }
-        deviceEventCount = 0;
     }
 
     /** */
@@ -530,8 +492,6 @@ logger.finer("detectDevices: deviceEventCount: " + deviceEventCount);
 
     @Override
     public void processEvents() {
-        int eventIndex;
-
 logger.finer("CHECKPOINT-7.0");
         if (hidManager == null || inProcessEvents) {
             return;
@@ -539,11 +499,15 @@ logger.finer("CHECKPOINT-7.0");
 
 logger.finer("CHECKPOINT-7.1");
         inProcessEvents = true;
-        for (eventIndex = 0; eventIndex < inputEventCount; eventIndex++) {
-            processQueuedEvent(inputEventQueue[eventIndex]);
+        for (int eventIndex = 0; eventIndex < inputEventQueue.size(); eventIndex++) {
+            processQueuedEvent(inputEventQueue.poll());
         }
-        inputEventCount = 0;
         inProcessEvents = false;
 logger.finer("CHECKPOINT-7.2");
+    }
+
+    @Override
+    public boolean isSupported() {
+        return PlatformUtil.isMac();
     }
 }

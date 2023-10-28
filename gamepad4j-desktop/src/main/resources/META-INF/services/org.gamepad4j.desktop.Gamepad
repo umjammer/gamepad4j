@@ -1,0 +1,3 @@
+org.gamepad4j.macos.MacosxGamepad
+org.gamepad4j.linux.LinuxGamepad
+org.gamepad4j.windows.WindowsGamepad

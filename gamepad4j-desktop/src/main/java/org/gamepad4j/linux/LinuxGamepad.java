@@ -35,8 +35,9 @@ import net.java.games.input.linux.LinuxIO.input_absinfo;
 import net.java.games.input.linux.LinuxIO.input_event;
 import net.java.games.input.linux.LinuxIO.input_id;
 import net.java.games.input.linux.LinuxIO.stat;
-import org.gamepad4j.shared.BaseGamepad;
-import org.gamepad4j.shared.Gamepad.Device.Private;
+import org.gamepad4j.desktop.BaseGamepad;
+import org.gamepad4j.desktop.Gamepad.Device.Private;
+import org.gamepad4j.util.PlatformUtil;
 
 import static net.java.games.input.linux.LinuxIO.ABS_CNT;
 import static net.java.games.input.linux.LinuxIO.ABS_MAX;
@@ -56,10 +57,10 @@ import static net.java.games.input.linux.NativeDefinitions.EV_ABS;
 import static net.java.games.input.linux.NativeDefinitions.EV_CNT;
 import static net.java.games.input.linux.NativeDefinitions.EV_KEY;
 import static net.java.games.input.linux.NativeDefinitions.KEY_CNT;
-import static org.gamepad4j.shared.Gamepad.EventType.AXIS_MOVED;
-import static org.gamepad4j.shared.Gamepad.EventType.BUTTON_DOWN;
-import static org.gamepad4j.shared.Gamepad.EventType.BUTTON_UP;
-import static org.gamepad4j.shared.Gamepad.EventType.DEVICE_REMOVED;
+import static org.gamepad4j.desktop.Gamepad.EventType.AXIS_MOVED;
+import static org.gamepad4j.desktop.Gamepad.EventType.BUTTON_DOWN;
+import static org.gamepad4j.desktop.Gamepad.EventType.BUTTON_UP;
+import static org.gamepad4j.desktop.Gamepad.EventType.DEVICE_REMOVED;
 
 
 /**
@@ -402,5 +403,10 @@ logger.fine("shutdown...");
             eventCount = 0;
         }
         inProcessEvents = false;
+    }
+
+    @Override
+    public boolean isSupported() {
+        return PlatformUtil.isLinux();
     }
 }

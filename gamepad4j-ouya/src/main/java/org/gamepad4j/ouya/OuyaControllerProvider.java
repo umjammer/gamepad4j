@@ -95,4 +95,28 @@ public class OuyaControllerProvider implements IControllerProvider {
     public void removeListener(IControllerListener listener) {
         this.listeners.removeListener(listener);
     }
+
+    /** Holds value of OUYA runtime detection. */
+    private static Boolean isOuya = null;
+
+    @Override
+    public boolean isSupported() {
+        if (isOuya == null) {
+            try {
+                logger.finer("checking ouya...");
+                Class<?> buildClass = Class.forName("android.os.Build");
+                logger.fine("Create class 'android.os.Build'");
+                Field deviceField = buildClass.getDeclaredField("DEVICE");
+                Object device = deviceField.get(null);
+                logger.fine("Device Type: '" + device + "'");
+                String deviceName = device.toString().trim().toLowerCase();
+                isOuya = deviceName.contains("ouya");
+                logger.fine("is OUYA: " + isOuya);
+            } catch (Exception e) {
+                logger.finer("checking ouya: NO");
+                return false;
+            }
+        }
+        return isOuya;
+    }
 }

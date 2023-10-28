@@ -46,4 +46,7 @@ public interface IControllerProvider {
      * @param listener The controller listener to remove.
      */
     void removeListener(IControllerListener listener);
+
+    /** */
+    boolean isSupported();
 }

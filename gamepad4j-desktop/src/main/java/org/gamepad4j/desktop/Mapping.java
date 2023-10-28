@@ -85,7 +85,7 @@ public class Mapping {
                 // If not, load them now
                 String vendorHex = Integer.toHexString(controller.getVendorID()).toUpperCase();
                 String productHex = Integer.toHexString(controller.getProductID()).toUpperCase();
-                String mappingFileName = "/mappings/" + PlatformUtil.getPlatform().name() + "/"
+                String mappingFileName = "/mappings/" + PlatformUtil.getPlatform() + "/"
                         + "0x" + vendorHex + "-0x" + productHex + "-gamepad4j-mapping.properties";
                 logger.fine("Load mapping from resource: " + mappingFileName);
 

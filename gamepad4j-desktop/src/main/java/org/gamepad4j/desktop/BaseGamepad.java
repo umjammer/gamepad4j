@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package org.gamepad4j.shared;
+package org.gamepad4j.desktop;
 
 
 import java.util.ArrayList;
@@ -71,32 +71,42 @@ public abstract class BaseGamepad implements Gamepad {
     /** */
     private final List<GamepadListener> listeners = new ArrayList<>();
 
-    /** */
+    @Override
+    public void addGamepadListener(GamepadListener l) {
+        listeners.add(l);
+    }
+
+    @Override
+    public void removeGamepadListener(GamepadListener l) {
+        listeners.remove(l);
+    }
+
+    /** @see EventType#DEVICE_ATTACHED */
     protected void fireDeviceAttach(Device device) {
         listeners.forEach(l -> l.deviceAttach(device));
     }
 
-    /** */
+    /** @see EventType#DEVICE_REMOVED */
     protected void fireDeviceRemove(Device device) {
         listeners.forEach(l -> l.deviceRemove(device));
     }
 
-    /** */
+    /** @see EventType#BUTTON_DOWN */
     protected void fireButtonDown(Device device, int buttonID, double timestamp) {
         listeners.forEach(l -> l.buttonDown(device, buttonID, timestamp));
     }
 
-    /** */
-    protected void fireBbuttonUp(Device device, int buttonID, double timestamp) {
+    /** @see EventType#BUTTON_UP */
+    protected void fireButtonUp(Device device, int buttonID, double timestamp) {
         listeners.forEach(l -> l.buttonUp(device, buttonID, timestamp));
     }
 
-    /** */
+    /** @see EventType#AXIS_MOVED */
     protected void fireAxisMove(Device device, int axisID, float value, double timestamp) {
         listeners.forEach(l -> l.axisMove(device, axisID, value, timestamp));
     }
 
-    /** */
+    /** Dispatches an event */
     protected void processQueuedEvent(QueuedEvent event) {
 if (event == null) {
  logger.finer("event is null");
@@ -118,7 +128,7 @@ if (event == null) {
         }
         case BUTTON_UP: {
             ButtonEventData buttonEvent = (ButtonEventData) event.eventData;
-            fireBbuttonUp(buttonEvent.device, buttonEvent.buttonID, buttonEvent.timestamp);
+            fireButtonUp(buttonEvent.device, buttonEvent.buttonID, buttonEvent.timestamp);
             break;
         }
         case AXIS_MOVED: {

@@ -18,16 +18,27 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-package org.gamepad4j.shared;
+package org.gamepad4j.desktop;
+
+
+import java.util.ServiceLoader;
 
 
 /**
+ * This represents not a device but whole devices.
+ *
  * @author Alex Diener adiener@sacredsoftware.net
  */
 public interface Gamepad {
 
-    static Gamepad getInstance() {
-        return new org.gamepad4j.macos.MacosxGamepad();
+    /** */
+    static Gamepad getGamepad() {
+        for (Gamepad gamepad : ServiceLoader.load(Gamepad.class)) {
+            if (gamepad.isSupported()) {
+                return gamepad;
+            }
+        }
+        throw new IllegalStateException("no suitable native adapter");
     }
 
     interface EventData {
@@ -153,18 +164,28 @@ public interface Gamepad {
     /** ??? */
     void processEvents();
 
+    /** */
+    boolean isSupported();
+
+    /** */
+    void addGamepadListener(GamepadListener l);
+
+    /** */
+    void removeGamepadListener(GamepadListener l);
+
+    /** */
     interface GamepadListener {
 
         /**
-         * Registers a function to be called whenever a device is attached. The specified function will be
-         * called only during calls to Gamepad_init() and Gamepad_detectDevices(), in the thread from
+         * a function to be called whenever a device is attached. The specified function will be
+         * called only during calls to init() and detectDevices(), in the thread from
          * which those functions were called. Calling this function with a NULL argument will stop any
          * previously registered callback from being called subsequently.
          */
         void deviceAttach(Device device);
 
         /**
-         * Registers a function to be called whenever a device is detached. The specified function can be
+         * a function to be called whenever a device is detached. The specified function can be
          * called at any time, and will not necessarily be called from the main thread. Calling this
          * function with a NULL argument will stop any previously registered callback from being called
          * subsequently.
@@ -172,25 +193,25 @@ public interface Gamepad {
         void deviceRemove(Device device);
 
         /**
-         * Registers a function to be called whenever a button on any attached device is pressed. The
-         * specified function will be called only during calls to Gamepad_processEvents(), in the
-         * thread from which Gamepad_processEvents() was called. Calling this function with a NULL
+         * a function to be called whenever a button on any attached device is pressed. The
+         * specified function will be called only during calls to processEvents(), in the
+         * thread from which processEvents() was called. Calling this function with a null
          * argument will stop any previously registered callback from being called subsequently.
          */
         void buttonDown(Device device, int buttonID, double timestamp);
 
         /**
-         * Registers a function to be called whenever a button on any attached device is released. The
-         * specified function will be called only during calls to Gamepad_processEvents(), in the
-         * thread from which Gamepad_processEvents() was called. Calling this function with a NULL
+         * a function to be called whenever a button on any attached device is released. The
+         * specified function will be called only during calls to processEvents(), in the
+         * thread from which processEvents() was called. Calling this function with a null
          * argument will stop any previously registered callback from being called subsequently.
          */
         void buttonUp(Device device, int buttonID, double timestamp);
 
         /**
-         * Registers a function to be called whenever an axis on any attached device is moved. The
-         * specified function will be called only during calls to Gamepad_processEvents(), in the
-         * thread from which Gamepad_processEvents() was called. Calling this function with a NULL
+         * a function to be called whenever an axis on any attached device is moved. The
+         * specified function will be called only during calls to processEvents(), in the
+         * thread from which processEvents() was called. Calling this function with a null
          * argument will stop any previously registered callback from being called subsequently.
          */
         void axisMove(Device device, int axisID, float value, double timestamp);

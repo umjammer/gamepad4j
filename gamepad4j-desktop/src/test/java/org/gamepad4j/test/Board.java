@@ -35,11 +35,13 @@ public class Board extends JPanel implements ActionListener, Runnable {
     private Timer timer;
     private Craft craft;
 
+    Controllers environment;
+
     public Board() {
 
         // Initialize the API
         logger.fine("Initialize controllers...");
-        Controllers.initialize();
+        environment = Controllers.instance();
 
         setFocusable(true);
         setBackground(Color.BLACK);
@@ -56,7 +58,7 @@ public class Board extends JPanel implements ActionListener, Runnable {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.fine("Shutdown Gamepad API");
-            Controllers.shutdown();
+            environment.shutdown();
         }));
     }
 
@@ -87,8 +89,8 @@ public class Board extends JPanel implements ActionListener, Runnable {
         while (true) {
 try {
             // Poll the state of the controllers
-            Controllers.checkControllers();
-            IController[] gamepads = Controllers.getControllers();
+            environment.checkControllers();
+            IController[] gamepads = environment.getControllers();
             if (gamepads.length > 0) {
                 boolean moving = false;
 

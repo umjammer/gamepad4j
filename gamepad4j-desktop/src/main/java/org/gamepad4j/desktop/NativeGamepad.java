@@ -8,8 +8,8 @@ import java.util.logging.Logger;
 
 import org.gamepad4j.base.BaseAxis;
 import org.gamepad4j.base.BaseButton;
-import org.gamepad4j.shared.Gamepad;
-import org.gamepad4j.shared.Gamepad.Device;
+import org.gamepad4j.desktop.Gamepad.GamepadListener;
+import org.gamepad4j.desktop.Gamepad.Device;
 
 
 /**
@@ -22,7 +22,7 @@ public class NativeGamepad {
 
     static final Logger logger = Logger.getLogger(NativeGamepad.class.getName());
 
-    private Gamepad gamepad = Gamepad.getInstance();
+    private Gamepad gamepad = Gamepad.getGamepad();
 
     /**
      * Array which temporarily holds controller ID information.
@@ -89,12 +89,17 @@ public class NativeGamepad {
     /**
      * Initializes the native gamepad library.
      */
-    public void initialize() {
-        logger.fine("initialize: native...");
+    public NativeGamepad() {
+        logger.fine("initialize: native...: " + gamepad.getClass().getName());
         gamepad.init();
         logger.fine("initialize: detect pads...");
         detectPads();
         logger.fine("initialize: done.");
+    }
+
+    /** connect native - api listener */
+    public void setGamepadListener(GamepadListener l) {
+        gamepad.addGamepadListener(l);
     }
 
     /**
