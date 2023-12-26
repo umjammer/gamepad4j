@@ -46,9 +46,10 @@ public class Board extends JPanel {
 
         craft = new Craft();
 
-        if (environment.getControllers().length == 0) {
-            throw new IllegalStateException("no controller");
+        while (environment.getControllers().length == 0) {
+            Thread.yield();
         }
+
         environment.addListener(new IControllerAdapter() {
 
             @Override
