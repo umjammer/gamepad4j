@@ -89,7 +89,7 @@ public class BaseButton implements IButton {
      */
     public void setPressed(boolean isPressed) {
         if (isPressed != this.isPressed) {
-            logger.fine("Button press change: " + isPressed + "/ code: " + this.code + " / ID: "
+            logger.finer("Button press change: " + isPressed + "/ code: " + this.code + " / ID: "
                     + this.ID + " / label: " + this.label + " / key: " + this.labelKey);
         }
         this.isPressed = isPressed;

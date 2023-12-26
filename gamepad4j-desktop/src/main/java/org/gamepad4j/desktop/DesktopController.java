@@ -47,10 +47,14 @@ public class DesktopController extends AbstractBaseController {
         // For now, create instance with "wrong" device ID 0.
         // Real value will be updated later through setter method.
         super(device.deviceID);
+
         this.device = device;
-        this.setDescription(device.description);
-        this.setVendorID(device.vendorID);
-        this.setProductID(device.productID);
+
+        this.description = device.description;
+        this.vendorID = device.vendorID;
+        this.productID = device.productID;
+
+        // TODO below
         this.initializeMapping();
         this.createButtons(device.numButtons);
         this.createAxes(device.numAxes);

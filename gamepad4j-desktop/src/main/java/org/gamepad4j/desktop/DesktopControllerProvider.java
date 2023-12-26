@@ -87,6 +87,7 @@ logger.finer("buttonDown: " + connected + ", " + device.deviceID);
                 }
                 DesktopController controller = connected.get(device.deviceID);
 
+logger.fine("buttonDown: " + buttonID);
                 BaseButton button = (BaseButton) controller.getButton(buttonID);
                 button.setPressed(true);
                 listenerSupport.fireButtonDown(controller, button, ButtonID.UNKNOWN);
@@ -98,6 +99,7 @@ logger.finer("buttonDown: " + connected + ", " + device.deviceID);
 logger.finer("buttonUp: " + connected + ", " + device.deviceID);
                     return;
                 }
+logger.finer("buttonUp: " + buttonID);
                 DesktopController controller = connected.get(device.deviceID);
 
                 BaseButton button = (BaseButton) controller.getButton(buttonID);
@@ -111,6 +113,7 @@ logger.finer("buttonUp: " + connected + ", " + device.deviceID);
 logger.finer("axisMove: " + connected + ", " + device.deviceID);
                     return;
                 }
+logger.finer("axisMove: " + axisID + ", " + value);
                 DesktopController controller = connected.get(device.deviceID);
 
 //                BaseAxis axes = (BaseAxis) controller.getAxes()[axisID];

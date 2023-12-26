@@ -226,14 +226,14 @@ logger.finer("onDeviceValueChanged: " + device.deviceID + ", " + context + ", " 
                     Hat hat = hatValueToXY(integerValue, axisElement.logicalMax - axisElement.logicalMin + 1);
 
                     if (hat.x() != device.axisStates[axisIndex]) {
-logger.fine("hat x: " + hat.x());
+logger.finer("hat x: " + hat.x());
                         device.fireAxisMove(axisIndex, hat.x());
 
                         device.axisStates[axisIndex] = hat.x();
                     }
 
                     if (hat.y() != device.axisStates[axisIndex + 1]) {
-logger.fine("hat y: " + hat.y());
+logger.finer("hat y: " + hat.y());
                         device.fireAxisMove(axisIndex + 1, hat.y());
 
                         device.axisStates[axisIndex + 1] = hat.y();
