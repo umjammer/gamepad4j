@@ -101,13 +101,13 @@ Links / Web Resources
  * Github Site: https://github.com/marcelschoen/gamepad4j
  * Javadoc: http://www.gamepad4j.org/javadoc
  * Downloads: https://sourceforge.net/projects/gamepad4j/files/
- * Native Gamepad API: http://forums.tigsource.com/index.php?topic=10675
+ * Native Gamepad API: http://forums.tigsource.com/deviceId.php?topic=10675
 
 
 Credits
 -------
  * Java API by Marcel Schoen, Switzerland
- * Desktop native API by Alex Diener: http://forums.tigsource.com/index.php?topic=10675.msg328738#msg328738
+ * Desktop native API by Alex Diener: http://forums.tigsource.com/deviceId.php?topic=10675.msg328738#msg328738
  * Native API multiplatform build support and testing by Thomas Frauenknecht, Switzerland
  * Website Design by Jason Long: https://github.com/jasonlong/architect-theme
  * Jekyll Theme by Pietro Menna: https://github.com/pietromenna/jekyll-architect-theme

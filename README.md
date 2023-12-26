@@ -1,13 +1,38 @@
-Gamepad4J
-=========
+[![Release](https://jitpack.io/v/umjammer/Gamepad4J.svg)](https://jitpack.io/#umjammer/Gamepad4J)
+[![Java CI](https://github.com/umjammer/Gamepad4J/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/Gamepad4J/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/Gamepad4J/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/Gamepad4J/actions/workflows/codeql-analysis.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
+
+# Gamepad4J
+
+🎮 modified Gamepad4J.
+
+ * use jna instead of jni
+ * use event listener instead of polling
+
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/Gamepad4J)
+
+## TODO
+
+ * linux, windows are not tested
+ * jinput spi
+
+## LESSON
+
+ * keep the context object for callback not to be garbage collected
+ * callback issue: it's important also callback is static or not, why ???
+
+---
+
+# Original
 
 A simple, elegant and powerful API for using gamepads like the Xbox 360 or DualShock 3 pad in Java-based games. 
 
 *Release 1.0 planned for Nov/Dec 2014*
-
  
-Features
---------
+## Features
 
   * The core API provides simple, object-oriented access to the buttons, analog sticks and triggers of a common gamepad.
   * Convenience methods for getting the direction (degrees) and distance to center of an analog stick
@@ -21,12 +46,11 @@ Features
   * Provides clean Gradle and Maven build for the Java part
   * Apache 2.0 license
 
-
-Usage Example
--------------
+## Usage Example
 
 Initialize the API, query the connected controllers, and check the state of some buttons and an analog stick. Then shut down the API again when exiting the game:
 
+```java
         // Initialize the API
         Controllers.initialize();
         ...
@@ -52,19 +76,16 @@ Initialize the API, query the connected controllers, and check the state of some
         }
         // Game ended / shut down the API
         Controllers.shutdown();
-    
+```
 
-Platform Support
-----------------
+## Platform Support
 
   * OUYA (uses OUYA ODK controller API)
   * Desktop (Windows, Linux, MacOS, uses JNI wrapper)
   
 Support for more platforms is planned for the future, specifically generic Android 2/3/4, Sony Xperia Play and Gamestick.
 
-
-Controller Support
-------------------
+## Controller Support
 
 The API provides mappings for some popular controllers out of the box:
 
@@ -75,44 +96,35 @@ The API provides mappings for some popular controllers out of the box:
  
 Support for more controllers will probably be included in future releases. Sending in your own, custom created mappings (using the Mapper tool contained in the executable Uber-jar) will help a lot.
 
-
-Future Controller Support
--------------------------
+## Future Controller Support
 
 It is not (yet) designed to deal specifically with joysticks / flightsticks, steering wheels etc. However, since today probably 80% of game developers really just want to support a gamepad for their game, this is what this API is focusing on. Still, all the analog axes and digital buttons of a controller can be queried, so the API can be used to handle any kind of controller, it just provides no mappings or convenience methods to do so. In the future, specific support for joysticks will probably be added (and maybe for steering wheels, if possible).
 
 
-Known Issues
-------------
+## Known Issues
 
  * On desktop systems, the mappings may not always be correct, depending on what driver is being used.
  * The Xbox 360 pad analog triggers are not properly supported on Windows, due to the Microsoft driver putting them both on the same analog axis (one using the positive, the other using the negative value range; press both, and they negate each other). Ironically, there seems to be no such issue on Linux and MacOS.
  
-
-Links / Web Resources
----------------------
+## Links / Web Resources
 
  * Project Site: http://www.gamepad4j.org
  * Github Site: https://github.com/marcelschoen/gamepad4j
  * Javadoc: http://www.gamepad4j.org/javadoc
  * Downloads: https://sourceforge.net/projects/gamepad4j/files/
- * Native Gamepad API: http://forums.tigsource.com/index.php?topic=10675
+ * Native Gamepad API: http://forums.tigsource.com/deviceId.php?topic=10675
 
+## Credits
 
-Credits
--------
  * Java API by Marcel Schoen, Switzerland
- * Desktop native API by Alex Diener: http://forums.tigsource.com/index.php?topic=10675.msg328738#msg328738
+ * Desktop native API by Alex Diener: http://forums.tigsource.com/deviceId.php?topic=10675.msg328738#msg328738
  * Native API multiplatform build support and testing by Thomas Frauenknecht, Switzerland
  * Website Design by Jason Long: https://github.com/jasonlong/architect-theme
  * Jekyll Theme by Pietro Menna: https://github.com/pietromenna/jekyll-architect-theme
 
+## Build Information
 
-Build Information
-=================
-
-Prerequisites
--------------
+### Prerequisites
 
  * GIT (sourcecode is on Github)
  * Java 1.6
@@ -122,15 +134,11 @@ Prerequisites
  * MinGW on Windows (dito)
  * XCode on MacOS (dito)
 
- 
-GIT Branches
-------------
+### GIT Branches
 
 Currently there are only two branches, "master" and "gh-pages". Only "master" is relevant for the code. "gh-pages" is a special branch used by GitHub for publishing the project site. Separate, new branches will probably be used in the future for developing new experimental stuff.
 
-
-Building The API
-----------------
+### Building The API
 
 The project was developed using Gradle 1.2 and/or Maven 3.2.3. It can be built with either Gradle or Maven, just to make it accessible to more developers. Just check out the project using GIT and build it with either one of these commands:
 
@@ -142,9 +150,7 @@ or
 
 The native libraries should not need any more changes. If they do, see below.
  
- 
-Building Native Libraries
--------------------------
+### Building Native Libraries
 
 For the desktop support, this API uses native libraries, wrapped with JNI. In order to re-compile the native code, the proper environment is required for each platform. The first releases were built with:
 
@@ -156,4 +162,3 @@ For the desktop support, this API uses native libraries, wrapped with JNI. In or
 You will have to adapt some environment variables in the corresponding build scripts, according to your environment, before you can compile the code.
 
 Once compiled, the native libraries have been copied into the resources folder. Just rebuild the Jar file, and bob's your uncle.
- 
