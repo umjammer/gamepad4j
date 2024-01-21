@@ -422,7 +422,7 @@ logger.finer("CHECKPOINT-0.S");
             values[0] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
             value.setValue(kHIDUsage_GD_Joystick);
             values[1] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
-            dictionaries[0] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, new NativeLong(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
+            dictionaries[0] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, CFIndex.of(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
             CFLib.INSTANCE.CFRelease(values[0]);
             CFLib.INSTANCE.CFRelease(values[1]);
 
@@ -430,7 +430,7 @@ logger.finer("CHECKPOINT-0.S");
             values[0] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
             value.setValue(kHIDUsage_GD_GamePad);
             values[1] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
-            dictionaries[1] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, new NativeLong(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
+            dictionaries[1] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, CFIndex.of(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
             CFLib.INSTANCE.CFRelease(values[0]);
             CFLib.INSTANCE.CFRelease(values[1]);
 
@@ -438,7 +438,7 @@ logger.finer("CHECKPOINT-0.S");
             values[0] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
             value.setValue(kHIDUsage_GD_MultiAxisController);
             values[1] = CFLib.INSTANCE.CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, value);
-            dictionaries[2] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, new NativeLong(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
+            dictionaries[2] = CFLib.INSTANCE.CFDictionaryCreate(kCFAllocatorDefault, keys, values, CFIndex.of(2), kCFTypeDictionaryKeyCallBacks, kCFTypeDictionaryValueCallBacks);
             CFLib.INSTANCE.CFRelease(values[0]);
             CFLib.INSTANCE.CFRelease(values[1]);
 

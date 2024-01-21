@@ -30,35 +30,34 @@ import java.util.concurrent.TimeUnit;
 
 import com.sun.jna.platform.win32.WinReg.HKEY;
 import com.sun.jna.ptr.IntByReference;
-import net.java.games.input.windows.User32Ex;
-import net.java.games.input.windows.User32Ex.JOYCAPS;
-import net.java.games.input.windows.User32Ex.JOYINFOEX;
+import net.java.games.input.windows.WinAPI;
+import net.java.games.input.windows.WinAPI.JOYCAPS;
+import net.java.games.input.windows.WinAPI.JOYINFOEX;
 import org.gamepad4j.desktop.BaseGamepad;
-import org.gamepad4j.macos.MacosxGamepad;
 import org.gamepad4j.util.PlatformUtil;
 
 import static com.sun.jna.platform.win32.WinError.ERROR_SUCCESS;
 import static com.sun.jna.platform.win32.WinNT.KEY_READ;
 import static com.sun.jna.platform.win32.WinReg.HKEY_CURRENT_USER;
 import static com.sun.jna.platform.win32.WinReg.HKEY_LOCAL_MACHINE;
-import static net.java.games.input.windows.User32Ex.JOYCAPS_HASPOV;
-import static net.java.games.input.windows.User32Ex.JOYCAPS_HASR;
-import static net.java.games.input.windows.User32Ex.JOYCAPS_HASU;
-import static net.java.games.input.windows.User32Ex.JOYCAPS_HASV;
-import static net.java.games.input.windows.User32Ex.JOYCAPS_HASZ;
-import static net.java.games.input.windows.User32Ex.JOYERR_NOERROR;
-import static net.java.games.input.windows.User32Ex.JOYERR_UNPLUGGED;
-import static net.java.games.input.windows.User32Ex.JOYSTICKID1;
-import static net.java.games.input.windows.User32Ex.JOY_POVBACKWARD;
-import static net.java.games.input.windows.User32Ex.JOY_POVCENTERED;
-import static net.java.games.input.windows.User32Ex.JOY_POVFORWARD;
-import static net.java.games.input.windows.User32Ex.JOY_POVLEFT;
-import static net.java.games.input.windows.User32Ex.JOY_POVRIGHT;
-import static net.java.games.input.windows.User32Ex.JOY_RETURNALL;
-import static net.java.games.input.windows.User32Ex.REGSTR_KEY_JOYCURR;
-import static net.java.games.input.windows.User32Ex.REGSTR_PATH_JOYCONFIG;
-import static net.java.games.input.windows.User32Ex.REGSTR_PATH_JOYOEM;
-import static net.java.games.input.windows.User32Ex.REGSTR_VAL_JOYOEMNAME;
+import static net.java.games.input.windows.WinAPI.JOYCAPS_HASPOV;
+import static net.java.games.input.windows.WinAPI.JOYCAPS_HASR;
+import static net.java.games.input.windows.WinAPI.JOYCAPS_HASU;
+import static net.java.games.input.windows.WinAPI.JOYCAPS_HASV;
+import static net.java.games.input.windows.WinAPI.JOYCAPS_HASZ;
+import static net.java.games.input.windows.WinAPI.JOYERR_NOERROR;
+import static net.java.games.input.windows.WinAPI.JOYERR_UNPLUGGED;
+import static net.java.games.input.windows.WinAPI.JOYSTICKID1;
+import static net.java.games.input.windows.WinAPI.JOY_POVBACKWARD;
+import static net.java.games.input.windows.WinAPI.JOY_POVCENTERED;
+import static net.java.games.input.windows.WinAPI.JOY_POVFORWARD;
+import static net.java.games.input.windows.WinAPI.JOY_POVLEFT;
+import static net.java.games.input.windows.WinAPI.JOY_POVRIGHT;
+import static net.java.games.input.windows.WinAPI.JOY_RETURNALL;
+import static net.java.games.input.windows.WinAPI.REGSTR_KEY_JOYCURR;
+import static net.java.games.input.windows.WinAPI.REGSTR_PATH_JOYCONFIG;
+import static net.java.games.input.windows.WinAPI.REGSTR_PATH_JOYOEM;
+import static net.java.games.input.windows.WinAPI.REGSTR_VAL_JOYOEMNAME;
 
 
 /**
@@ -137,9 +136,9 @@ logger.warning("no such deviceId: " + deviceId);
         HKEY topKey, key = new HKEY();
 
         String subkey = String.format("%s\\%s\\%s", REGSTR_PATH_JOYCONFIG, new String(caps.szRegKey, StandardCharsets.UTF_8).replace("\u0000", ""), REGSTR_KEY_JOYCURR);
-        long result = User32Ex.INSTANCE.RegOpenKeyEx(topKey = HKEY_LOCAL_MACHINE, subkey.getBytes(), 0, KEY_READ, key);
+        long result = WinAPI.User32Ex.INSTANCE.RegOpenKeyEx(topKey = HKEY_LOCAL_MACHINE, subkey.getBytes(), 0, KEY_READ, key);
         if (result != ERROR_SUCCESS) {
-            result = User32Ex.INSTANCE.RegOpenKeyEx(topKey = HKEY_CURRENT_USER, subkey.getBytes(), 0, KEY_READ, key);
+            result = WinAPI.User32Ex.INSTANCE.RegOpenKeyEx(topKey = HKEY_CURRENT_USER, subkey.getBytes(), 0, KEY_READ, key);
         }
         if (result == ERROR_SUCCESS) {
             byte[] name = new byte[REG_STRING_MAX];
@@ -147,22 +146,22 @@ logger.warning("no such deviceId: " + deviceId);
 
             String value = String.format("Joystick%d%s", joystickID + 1, REGSTR_VAL_JOYOEMNAME);
             nameSize.setValue(name.length);
-            result = User32Ex.INSTANCE.RegQueryValueEx(key, value.getBytes(), null, null, name, nameSize);
-            User32Ex.INSTANCE.RegCloseKey(key);
+            result = WinAPI.User32Ex.INSTANCE.RegQueryValueEx(key, value.getBytes(), null, null, name, nameSize);
+            WinAPI.User32Ex.INSTANCE.RegCloseKey(key);
 
             if (result == ERROR_SUCCESS) {
                 subkey = String.format("%s\\%s", REGSTR_PATH_JOYOEM, new String(name, StandardCharsets.UTF_8).replace("\u0000", ""));
-                result = User32Ex.INSTANCE.RegOpenKeyEx(topKey, subkey.getBytes(), 0, KEY_READ, key);
+                result = WinAPI.User32Ex.INSTANCE.RegOpenKeyEx(topKey, subkey.getBytes(), 0, KEY_READ, key);
 
                 if (result == ERROR_SUCCESS) {
                     nameSize.setValue(name.length);
-                    result = User32Ex.INSTANCE.RegQueryValueEx(key, REGSTR_VAL_JOYOEMNAME.getBytes(), null, null, null, nameSize);
+                    result = WinAPI.User32Ex.INSTANCE.RegQueryValueEx(key, REGSTR_VAL_JOYOEMNAME.getBytes(), null, null, null, nameSize);
 
                     if (result == ERROR_SUCCESS) {
                         description = new byte[nameSize.getValue()];
-                        result = User32Ex.INSTANCE.RegQueryValueEx(key, REGSTR_VAL_JOYOEMNAME.getBytes(), null, null, description, nameSize);
+                        result = WinAPI.User32Ex.INSTANCE.RegQueryValueEx(key, REGSTR_VAL_JOYOEMNAME.getBytes(), null, null, description, nameSize);
                     }
-                    User32Ex.INSTANCE.RegCloseKey(key);
+                    WinAPI.User32Ex.INSTANCE.RegCloseKey(key);
 
                     if (result == ERROR_SUCCESS) {
                         return description;
@@ -184,15 +183,15 @@ logger.warning("no such deviceId: " + deviceId);
             return;
         }
 
-        int numPadsSupported = User32Ex.INSTANCE.joyGetNumDevs();
+        int numPadsSupported = WinAPI.User32Ex.INSTANCE.joyGetNumDevs();
         for (int deviceIndex = 0; deviceIndex < numPadsSupported; deviceIndex++) {
             JOYINFOEX info = new JOYINFOEX();
             info.dwSize = info.size();
             info.dwFlags = JOY_RETURNALL;
             int joystickID = JOYSTICKID1 + deviceIndex;
             JOYCAPS caps = new JOYCAPS();
-            if (User32Ex.INSTANCE.joyGetPosEx(joystickID, info) == JOYERR_NOERROR &&
-                    User32Ex.INSTANCE.joyGetDevCaps(joystickID, caps, caps.size()) == JOYERR_NOERROR) {
+            if (WinAPI.User32Ex.INSTANCE.joyGetPosEx(joystickID, info) == JOYERR_NOERROR &&
+                    WinAPI.User32Ex.INSTANCE.joyGetDevCaps(joystickID, caps, caps.size()) == JOYERR_NOERROR) {
 
                 boolean duplicate = false;
                 for (WindowsDevice windowsDevice : devices) {
@@ -348,7 +347,7 @@ logger.warning("no such deviceId: " + deviceId);
             JOYINFOEX info = new JOYINFOEX();
             info.dwSize = info.size();
             info.dwFlags = JOY_RETURNALL;
-            int /* MMRESULT */ result = User32Ex.INSTANCE.joyGetPosEx(device.joystickID, info);
+            int /* MMRESULT */ result = WinAPI.User32Ex.INSTANCE.joyGetPosEx(device.joystickID, info);
             if (result == JOYERR_UNPLUGGED) {
                 removeDevice(device);
             } else if (result == JOYERR_NOERROR) {
