@@ -5,7 +5,7 @@
 
 # Gamepad4J
 
-🎮 modified Gamepad4J.
+🎮 modified [Gamepad4J](https://github.com/born2snipe/gamepad4j).
 
  * use jna instead of jni
  * use event listener instead of polling
