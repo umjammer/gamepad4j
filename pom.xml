@@ -3,7 +3,7 @@
 
   <groupId>org.gamepad4j</groupId>
   <artifactId>gamepad4j-root</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.0.3</version>
 
   <packaging>pom</packaging>
   <modelVersion>4.0.0</modelVersion>
