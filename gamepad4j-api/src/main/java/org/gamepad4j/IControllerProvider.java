@@ -5,6 +5,9 @@
 package org.gamepad4j;
 
 
+import java.io.Closeable;
+
+
 /**
  * Interface for platform-specific provider for instances
  * of IController.
@@ -12,32 +15,26 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface IControllerProvider {
+public interface IControllerProvider extends Closeable {
 
     /**
      * Invoked once; may perform any kind of initialization.
      */
-    void initialize();
-
-    /**
-     * Invoked once when the game terminates. Can be used
-     * to free native stuff in JNI wrappers etc.
-     */
-    void release();
+    void open();
 
     /**
      * Registers a listener for controller events.
      *
-     * @param listener The controller listener.
+     * @param listener controllers listener.
      */
-    void addListener(IControllerListener listener);
+    void addListener(IControllersListener listener);
 
     /**
      * Removes a listener for controller events.
      *
-     * @param listener The controller listener to remove.
+     * @param listener controllers listener to remove.
      */
-    void removeListener(IControllerListener listener);
+    void removeListener(IControllersListener listener);
 
     /** Is used at {@link Controllers} constructor. */
     boolean isSupported();

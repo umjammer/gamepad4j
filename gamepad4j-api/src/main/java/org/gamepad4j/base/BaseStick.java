@@ -34,7 +34,7 @@ public class BaseStick implements IStick {
     protected IAxis yAxis = null;
 
     /** Stores the two axes in an array. */
-    private IAxis[] axes = new IAxis[2];
+    private final IAxis[] axes = new IAxis[2];
 
     /**
      * Creates a stick wrapper.
@@ -91,5 +91,10 @@ public class BaseStick implements IStick {
             return this.xAxis;
         }
         return this.yAxis;
+    }
+
+    @Override
+    public String toString() {
+        return "Stick:" + ID.toString();
     }
 }

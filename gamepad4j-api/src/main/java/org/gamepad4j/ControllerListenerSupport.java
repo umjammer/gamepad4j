@@ -9,7 +9,7 @@ import java.util.List;
 
 
 /**
- * Handles adding, removing and accessing controller listeners.
+ * Handles accessing controller listeners.
  *
  * @author Marcel Schoen
  * @version $Revision: $
@@ -37,38 +37,24 @@ public final class ControllerListenerSupport {
         listeners.remove(listener);
     }
 
-    /** @see IControllerListener#connected(IController) */
-    public void fireConnected(IController controller) {
+    /** @see IControllerListener#buttonDown(IButton, ButtonID) */
+    public void fireButtonDown(IButton button, ButtonID buttonID) {
         for (IControllerListener listener : listeners) {
-            listener.connected(controller);
+            listener.buttonDown(button, buttonID);
         }
     }
 
-    /** @see IControllerListener#disConnected(IController) */
-    public void fireDisconnected(IController controller) {
+    /** @see IControllerListener#buttonUp(IButton, ButtonID) */
+    public void fireButtonUp(IButton button, ButtonID buttonID) {
         for (IControllerListener listener : listeners) {
-            listener.disConnected(controller);
+            listener.buttonUp(button, buttonID);
         }
     }
 
-    /** @see IControllerListener#buttonDown(IController, IButton, ButtonID) */
-    public void fireButtonDown(IController controller, IButton button, ButtonID buttonID) {
+    /** @see IControllerListener#moveStick(IAxis, StickID) */
+    public void fireMoveStick(IAxis axis, StickID stick) {
         for (IControllerListener listener : listeners) {
-            listener.buttonDown(controller, button, buttonID);
-        }
-    }
-
-    /** @see IControllerListener#buttonUp(IController, IButton, ButtonID) */
-    public void fireButtonUp(IController controller, IButton button, ButtonID buttonID) {
-        for (IControllerListener listener : listeners) {
-            listener.buttonUp(controller, button, buttonID);
-        }
-    }
-
-    /** @see IControllerListener#moveStick(IController, StickID) */
-    public void fireMoveStick(IController controller, StickID stick) {
-        for (IControllerListener listener : listeners) {
-            listener.moveStick(controller, stick);
+            listener.moveStick(axis, stick);
         }
     }
 }

@@ -4,13 +4,20 @@
 
 package org.gamepad4j;
 
+import java.io.Closeable;
+import java.io.IOException;
+
+
 /**
  * Interface for handling a game controller.
  *
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface IController {
+public interface IController extends Closeable {
+
+    /** */
+    void open();
 
     /**
      * Returns an identifier which is basically a combination of the
@@ -151,7 +158,7 @@ public interface IController {
      * @return The pressure as a value between 0.0 (not pressed) and 1.0 (fully pressed).
      * @throws IllegalArgumentException If the given trigger does not exist.
      */
-    float getTriggerPressure(TriggerID triggerID) throws IllegalArgumentException;
+    float getTriggerPressure(TriggerID triggerID);
 
     /**
      * Returns a list of all buttons of this controller.
@@ -167,4 +174,24 @@ public interface IController {
      * @return The reference of that trigger (null if it does not exist).
      */
     ITrigger getTrigger(TriggerID triggerID);
+
+    /**
+     * Registers a listener for controller events.
+     *
+     * @param listener The controller listener.
+     */
+    void addListener(IControllerListener listener);
+
+    /**
+     * Removes a listener for controller events.
+     *
+     * @param listener The controller listener to remove.
+     */
+    void removeListener(IControllerListener listener);
+
+    /** Retrieves all components which this controller has */
+    IComponent[] getComponents();
+
+    /** Writes data to a device */
+    void write(byte[] data, int length, int reportId) throws IOException;
 }

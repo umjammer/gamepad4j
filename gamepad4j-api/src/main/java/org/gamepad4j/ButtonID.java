@@ -10,7 +10,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public enum ButtonID {
+public enum ButtonID implements Identifier {
 
     /** Digital face buttons */
     FACE_UP("Upper face-button"),
@@ -36,6 +36,9 @@ public enum ButtonID {
     BACK("Back"),
     PAUSE("Pause"),
     START("Start"),
+    OPTION("Option"),
+    SHARE("Share"),
+    TOUCHPAD("Home"),
 
     /** D-Pad (which may in fact be analog */
     D_PAD_UP("D-Pad Up"),

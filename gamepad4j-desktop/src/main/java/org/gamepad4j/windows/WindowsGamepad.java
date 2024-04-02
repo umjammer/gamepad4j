@@ -20,6 +20,7 @@
 
 package org.gamepad4j.windows;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -84,6 +85,11 @@ public class WindowsGamepad extends BaseGamepad {
         int povXAxisIndex;
         int povYAxisIndex;
         int[][] axisRanges = new int[2][];
+
+        @Override
+        public void write(byte[] data, int length, int reportId) throws IOException {
+            throw new UnsupportedOperationException("not implemented yet");
+        }
     }
 
     private final ScheduledExecutorService detectSes = Executors.newSingleThreadScheduledExecutor();

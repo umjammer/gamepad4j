@@ -10,7 +10,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public enum TriggerID {
+public enum TriggerID implements Identifier {
 
     /** Analog trigger buttons */
     LEFT_UP("Left upper trigger"),

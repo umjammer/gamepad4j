@@ -6,7 +6,6 @@
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import vavi.util.Debug;
 import vavix.rococoa.corefoundation.CFArray;
@@ -104,8 +103,8 @@ for (int i = 0; i < array.size(); i++) {
         CFLib.INSTANCE.CFRelease(array);
     }
 
+    // TODO doesn't work as expected
     @Test
-    @DisplayName("doesn't work as expected")
     void test2() throws Exception {
         Pointer hidManager = IOKitLib.INSTANCE.IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         IOKitLib.INSTANCE.IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
@@ -154,7 +153,7 @@ Debug.println(dictionary.toMap());
         CFArray array = CFLib.INSTANCE.CFArrayCreate(kCFAllocatorDefault, pp, CFIndex.of(pp.length), kCFTypeArrayCallBacks);
         CFLib.INSTANCE.CFRelease(dictionary);
 
-for (int i = 0; i < array.size(); i++) {
+for (int i = 0; i < array.size(); i++) { // TODO array size is 1
  Debug.println("array[" + i + "]: " + array.getValue(i).asDict().toMap());
 }
 

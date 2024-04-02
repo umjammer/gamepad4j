@@ -11,7 +11,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface IButton {
+public interface IButton extends IComponent {
 
     /**
      * Returns the deviceID of this button. May be "UNKNOWN" if
@@ -20,6 +20,7 @@ public interface IButton {
      * @return The deviceID of the button. If it is "ButtonID.UNKNOWN", the method
      * "getCode()" can be used to query the actual numerical value.
      */
+    @Override
     ButtonID getID();
 
     /**

@@ -20,12 +20,9 @@ import javax.imageio.stream.ImageInputStream;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import org.gamepad4j.ButtonID;
 import org.gamepad4j.Controllers;
-import org.gamepad4j.IButton;
 import org.gamepad4j.IController;
-import org.gamepad4j.IControllerListener;
-import org.gamepad4j.StickID;
+import org.gamepad4j.IControllersListener;
 
 
 /**
@@ -41,7 +38,7 @@ public class MappingToolWindow extends JFrame {
     /** Stores ImageIcon instances for various pads. */
     public static Map<Long, ImageIcon> padImageMap = new HashMap<>();
 
-    private Controllers environment;
+    private final Controllers environment;
 
     public MappingToolWindow() {
 
@@ -53,7 +50,6 @@ public class MappingToolWindow extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override public void windowClosing(WindowEvent e) {
                 GamepadCheck.running = false;
-                environment.shutdown();
                 e.getWindow().dispose();
             }
         });
@@ -92,7 +88,7 @@ public class MappingToolWindow extends JFrame {
             throw new IllegalStateException(e);
         }
 
-        environment.addListener(new IControllerListener() {
+        environment.addListener(new IControllersListener() {
             @Override public void connected(IController controller) {
                 System.out.println(">> Gamepad connected.");
                 updateWindow();
@@ -101,18 +97,6 @@ public class MappingToolWindow extends JFrame {
             @Override public void disConnected(IController controller) {
                 System.out.println(">> Gamepad disconnected.");
                 updateWindow();
-            }
-
-            @Override public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
-                System.out.println(">> button down");
-            }
-
-            @Override public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
-                System.out.println(">> button up");
-            }
-
-            @Override public void moveStick(IController controller, StickID stick) {
-                System.out.println(">> move stick");
             }
         });
     }

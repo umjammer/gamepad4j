@@ -4,10 +4,15 @@
 
 package org.gamepad4j.desktop;
 
+import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import org.gamepad4j.AxisID;
 import org.gamepad4j.ButtonID;
+import org.gamepad4j.ControllerListenerSupport;
+import org.gamepad4j.IControllerListener;
+import org.gamepad4j.IStick;
 import org.gamepad4j.StickID;
 import org.gamepad4j.TriggerID;
 import org.gamepad4j.base.AbstractBaseController;
@@ -16,6 +21,8 @@ import org.gamepad4j.base.BaseButton;
 import org.gamepad4j.base.BaseStick;
 import org.gamepad4j.base.BaseTrigger;
 import org.gamepad4j.desktop.Gamepad.Device;
+import org.gamepad4j.desktop.Gamepad.GamepadAdapter;
+import org.gamepad4j.desktop.Gamepad.GamepadListener;
 import org.gamepad4j.desktop.Mapping.MappingType;
 
 
@@ -27,7 +34,10 @@ import org.gamepad4j.desktop.Mapping.MappingType;
  */
 public class DesktopController extends AbstractBaseController {
 
-    static final Logger logger = Logger.getLogger(DesktopController.class.getName());
+    private static final Logger logger = Logger.getLogger(DesktopController.class.getName());
+
+    /** Stores controller listener support. */
+    private final ControllerListenerSupport listenerSupport = new ControllerListenerSupport();
 
     /** Default deadzone value for desktop controller axes. */
     public static final float DEFAULT_DEADZONE = 0.1f;
@@ -38,17 +48,20 @@ public class DesktopController extends AbstractBaseController {
     /** Default deadzone value. */
     private float defaultDeadZone = DEFAULT_DEADZONE;
 
+    private Gamepad gamepad;
+
     /**
      * Creates a desktop controller holder for a certain code.
      *
      * @param device The device number of the controller.
      */
-    public DesktopController(Device device) {
+    public DesktopController(Device device, Gamepad gamepad) {
         // For now, create instance with "wrong" device ID 0.
         // Real value will be updated later through setter method.
         super(device.deviceID);
 
         this.device = device;
+        this.gamepad = gamepad;
 
         this.description = device.description;
         this.vendorID = device.vendorID;
@@ -72,6 +85,41 @@ public class DesktopController extends AbstractBaseController {
      */
     public void setDefaultDeadZone(float deadZone) {
         this.defaultDeadZone = deadZone;
+    }
+
+    /** */
+    private final GamepadListener inputListener = new GamepadAdapter() {
+        @Override
+        public void buttonDown(Device device, int buttonID, double timestamp) {
+logger.finest("buttonDown: " + buttonID);
+            BaseButton button = (BaseButton) DesktopController.this.getButton(buttonID);
+            button.setPressed(true);
+            DesktopController.this.listenerSupport.fireButtonDown(button, ButtonID.UNKNOWN);
+        }
+
+        @Override
+        public void buttonUp(Device device, int buttonID, double timestamp) {
+            BaseButton button = (BaseButton) DesktopController.this.getButton(buttonID);
+            button.setPressed(false);
+            DesktopController.this.listenerSupport.fireButtonUp(button, ButtonID.UNKNOWN);
+        }
+
+        @Override
+        public void axisMove(Device device, int axisID, float value, double timestamp) {
+            BaseAxis axes = (BaseAxis) DesktopController.this.getAxes()[axisID];
+            if (axes == null) {
+logger.finest("no axis for: " + axisID);
+            } else {
+logger.finest("axis: " + axes + ", " + value);
+                axes.setValue(value);
+                DesktopController.this.listenerSupport.fireMoveStick(axes, StickID.UNKNOWN);
+            }
+        }
+    };
+
+    @Override
+    public void open() {
+        gamepad.addGamepadListener(inputListener);
     }
 
     /**
@@ -103,7 +151,7 @@ public class DesktopController extends AbstractBaseController {
             String mapping = Mapping.getMapping(this, MappingType.BUTTON, buttonNo);
             if (mapping != null) {
                 ButtonID buttonID = ButtonID.getButtonIDfromString(mapping);
-                logger.fine("Map button no. " + buttonNo + " from mapping " + mapping + " to button ID " + buttonID);
+                logger.finer("Map button no. " + buttonNo + " from mapping " + mapping + " to button ID " + buttonID);
                 this.buttons[buttonNo].setID(buttonID);
                 this.buttonMap.put(buttonID, this.buttons[buttonNo]);
                 String label = Mapping.getButtonLabel(this, buttonID);
@@ -133,7 +181,6 @@ public class DesktopController extends AbstractBaseController {
         // TODO Use pooling for these
         this.axes = new BaseAxis[numberOfAxes];
         this.triggers = new BaseTrigger[Mapping.getNumberOfTriggers(this)];
-        this.sticks = new BaseStick[Mapping.getNumberOfSticks(this)];
 
         int triggerNo = 0;
         for (int axisNo = 0; axisNo < axes.length; axisNo++) {
@@ -150,6 +197,8 @@ public class DesktopController extends AbstractBaseController {
                 processDpadAxis(mapping, axisNo);
             }
         }
+
+        this.sticks = stickMap.values().toArray(BaseStick[]::new);
     }
 
     /**
@@ -165,10 +214,14 @@ public class DesktopController extends AbstractBaseController {
             logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to dpad axis X");
             this.axes[axisNo] = new BaseAxis(AxisID.D_PAD_X, axisNo);
             this.dpadAxisMap.put(AxisID.D_PAD_X, this.axes[axisNo]);
-        } else {
+        } else if (axisTypePart.equalsIgnoreCase("Y")) {
             logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to dpad axis Y");
             this.axes[axisNo] = new BaseAxis(AxisID.D_PAD_Y, axisNo);
             this.dpadAxisMap.put(AxisID.D_PAD_Y, this.axes[axisNo]);
+        } else {
+            logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to dpad");
+            this.axes[axisNo] = new BaseAxis(AxisID.D_PAD, axisNo);
+            this.dpadAxisMap.put(AxisID.D_PAD, this.axes[axisNo]);
         }
     }
 
@@ -179,8 +232,9 @@ public class DesktopController extends AbstractBaseController {
      * @param axisNo  The number of the analog axis.
      */
     private void processStickAxis(String mapping, int axisNo) {
+logger.finer(mapping + ", " + axisNo);
         // Cut off the ID part, like "LEFT"
-        String stickIDpart = mapping.substring(0, mapping.indexOf("."));
+        String stickIDpart = mapping.substring(0, !mapping.contains(".") ? mapping.length() : mapping.indexOf("."));
         // Cut off the axis type part, like "X"
         String axisTypePart = mapping.substring(mapping.indexOf(".") + 1);
         StickID stickID = StickID.getStickIDfromString(stickIDpart);
@@ -190,15 +244,16 @@ public class DesktopController extends AbstractBaseController {
             stickMap.put(stickID, stick);
         }
         if (axisTypePart.equalsIgnoreCase("X")) {
-            logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to stick " + stickID + " axis X");
+            logger.finer("Map axis no. " + axisNo + " from mapping " + mapping + " to stick " + stickID + " axis X");
             this.axes[axisNo] = new BaseAxis(AxisID.X, axisNo);
             stick.setAxis(this.axes[axisNo]);
         } else {
-            logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to stick " + stickID + " axis Y");
+            logger.finer("Map axis no. " + axisNo + " from mapping " + mapping + " to stick " + stickID + " axis Y");
             this.axes[axisNo] = new BaseAxis(AxisID.Y, axisNo);
             stick.setAxis(this.axes[axisNo]);
         }
         this.axes[axisNo].setDeadZone(this.defaultDeadZone);
+        this.axes[axisNo].setParent(stick);
     }
 
     /**
@@ -210,12 +265,10 @@ public class DesktopController extends AbstractBaseController {
     private void processTriggerAxis(String mapping, int axisNo, int triggerNo) {
         TriggerID mappedID = TriggerID.getTriggerIDfromString(mapping);
         if (mappedID != null) {
-            logger.fine("Map axis no. " + axisNo + " from mapping " + mapping + " to trigger " + mappedID);
+            logger.finer("Map axis no. " + axisNo + " from mapping " + mapping + " to trigger " + mappedID);
             this.axes[axisNo] = new BaseAxis(AxisID.TRIGGER, axisNo);
 
-
             // TODO: SET LABELS AND RESOURCE KEYS
-
 
             this.triggers[triggerNo] = new BaseTrigger(this, triggerNo, this.axes[axisNo], "", "");
             this.triggers[triggerNo].setID(mappedID);
@@ -232,6 +285,28 @@ public class DesktopController extends AbstractBaseController {
             if (labelKey != null) {
                 this.triggers[triggerNo].setLabelKey(labelKey);
             }
+
+            this.axes[axisNo].setParent(this.triggers[triggerNo]);
         }
+    }
+
+    @Override
+    public void addListener(IControllerListener listener) {
+        this.listenerSupport.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(IControllerListener listener) {
+        this.listenerSupport.removeListener(listener);
+    }
+
+    @Override
+    public void write(byte[] data, int length, int reportId) throws IOException {
+        this.device.write(data, length, reportId);
+    }
+
+    @Override
+    public void close() throws IOException {
+        gamepad.removeGamepadListener(inputListener);
     }
 }

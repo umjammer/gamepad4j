@@ -4,18 +4,21 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
+import java.io.IOException;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 
 import org.gamepad4j.ButtonID;
 import org.gamepad4j.Controllers;
 import org.gamepad4j.DpadDirection;
+import org.gamepad4j.IAxis;
 import org.gamepad4j.IButton;
 import org.gamepad4j.IController;
-import org.gamepad4j.IControllerListener.IControllerAdapter;
+import org.gamepad4j.IControllerListener;
 import org.gamepad4j.IStick;
 import org.gamepad4j.StickID;
 import org.gamepad4j.StickPosition;
+import vavi.util.Debug;
 
 
 /**
@@ -30,15 +33,13 @@ public class Board extends JPanel {
 
     static final Logger logger = Logger.getLogger(Board.class.getName());
 
-    private Craft craft;
+    private final Craft craft;
 
-    private Controllers environment;
-
-    public Board() {
+    public Board(int vendorId, int productId) {
 
         // Initialize the API
         logger.fine("Initialize controllers...");
-        environment = Controllers.instance();
+        Controllers environment = Controllers.instance();
 
         setFocusable(true);
         setBackground(Color.BLACK);
@@ -50,35 +51,24 @@ public class Board extends JPanel {
             Thread.yield();
         }
 
-        environment.addListener(new IControllerAdapter() {
+        IController controller = environment.getController(vendorId, productId);
+logger.info("controller: " + controller);
+
+        controller.addListener(new IControllerListener() {
 
             @Override
-            public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
-logger.fine("buttonDown: " + controller + ", " + button + ", " + buttonID);
-                DpadDirection dpadDirection = controller.getDpadDirection();
-                if (dpadDirection == DpadDirection.UP) {
-                    craft.goUp();
-                    move();
-                } else if (dpadDirection == DpadDirection.DOWN) {
-                    craft.goDown();
-                    move();
-                } else if (dpadDirection == DpadDirection.LEFT) {
-                    craft.goLeft();
-                    move();
-                } else if (dpadDirection == DpadDirection.RIGHT) {
-                    craft.goRight();
-                    move();
-                }
+            public void buttonDown(IButton button, ButtonID buttonID) {
+logger.finest("buttonDown: " + controller + ", " + button + ", " + buttonID);
             }
 
             @Override
-            public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
-logger.fine("buttonUp: " + controller + ", " + button + ", " + buttonID);
+            public void buttonUp(IButton button, ButtonID buttonID) {
+logger.finest("buttonUp: " + controller + ", " + button + ", " + buttonID);
             }
 
             @Override
-            public void moveStick(IController controller, StickID stick) {
-logger.finer("moveStick: " + controller + ", " + stick);
+            public void moveStick(IAxis axis, StickID stick) {
+logger.finest("moveStick: " + controller + ", " + stick);
                 IStick leftStick = controller.getStick(StickID.LEFT);
                 if (leftStick != null) {
                     StickPosition leftStickPosition = leftStick.getPosition();
@@ -102,12 +92,31 @@ logger.finer("moveStick: " + controller + ", " + stick);
                         move();
                     }
                 }
+                DpadDirection dpadDirection = controller.getDpadDirection();
+                if (dpadDirection == DpadDirection.UP) {
+                    craft.goUp();
+                    move();
+                } else if (dpadDirection == DpadDirection.DOWN) {
+                    craft.goDown();
+                    move();
+                } else if (dpadDirection == DpadDirection.LEFT) {
+                    craft.goLeft();
+                    move();
+                } else if (dpadDirection == DpadDirection.RIGHT) {
+                    craft.goRight();
+                    move();
+                }
             }
         });
+        controller.open();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.fine("Shutdown Gamepad API");
-            environment.shutdown();
+            try {
+                controller.close();
+            } catch (IOException e) {
+                Debug.printStackTrace(e);
+            }
         }));
     }
 

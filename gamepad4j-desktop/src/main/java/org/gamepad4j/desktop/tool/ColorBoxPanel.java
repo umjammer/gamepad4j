@@ -30,7 +30,7 @@ public class ColorBoxPanel extends JPanel implements IAxisListener {
 
     public static Dimension SIZE = new Dimension(50, 10);
 
-    private DecimalFormat df = new DecimalFormat("#.####");
+    private final DecimalFormat df = new DecimalFormat("#.####");
 
     public ColorBoxPanel(IAxis axis) {
         this.axis = axis;

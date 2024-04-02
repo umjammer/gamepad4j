@@ -6,8 +6,6 @@
 
 package org.gamepad4j.util;
 
-import java.util.logging.Logger;
-
 
 /**
  * OS-/Platform-related utility functionality.
@@ -16,12 +14,11 @@ import java.util.logging.Logger;
  */
 public class PlatformUtil {
 
-    static final Logger logger = Logger.getLogger(PlatformUtil.class.getName());
-
     /** Runtime OS detection. */
-    private static String OS = System.getProperty("os.name").toLowerCase();
+    private static final String OS = System.getProperty("os.name").toLowerCase();
 
     /** Holds value of OUYA runtime detection. */
+    @Deprecated
     private static Boolean isOuya = null;
 
     /**

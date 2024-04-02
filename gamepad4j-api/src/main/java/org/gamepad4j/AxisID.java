@@ -10,11 +10,12 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public enum AxisID {
+public enum AxisID implements Identifier {
 
     X,
     Y,
     D_PAD_X,
     D_PAD_Y,
-    TRIGGER
+    TRIGGER,
+    D_PAD
 }

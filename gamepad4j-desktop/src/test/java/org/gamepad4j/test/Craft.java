@@ -21,13 +21,13 @@ import javax.swing.ImageIcon;
  */
 public class Craft {
 
-    private String craft = "/craft.png";
+    private final String craft = "/craft.png";
 
     private int dx;
     private int dy;
     private int x;
     private int y;
-    private Image image;
+    private final Image image;
 
     public Craft() {
         ImageIcon ii = new ImageIcon(this.getClass().getResource(craft));

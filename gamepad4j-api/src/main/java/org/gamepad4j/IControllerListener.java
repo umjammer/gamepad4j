@@ -14,62 +14,40 @@ package org.gamepad4j;
 public interface IControllerListener {
 
     /**
-     * Is invoked when a controller is connected.
-     *
-     * @param controller The controller that was connected.
-     */
-    void connected(IController controller);
-
-    /**
-     * Is invoked when a controller is disconnected.
-     *
-     * @param controller The controller that was disconnected.
-     */
-    void disConnected(IController controller);
-
-    /**
      * Notifies a button press.
      *
-     * @param controller The controller on which a button was pressed.
      * @param button     The button that was pressed. If an analog pressure value
      *                   is required, it can be queried from this object.
      * @param buttonID   The deviceID of the button that was pressed.
      */
-    void buttonDown(IController controller, IButton button, ButtonID buttonID);
+    void buttonDown(IButton button, ButtonID buttonID);
 
     /**
      * Notifies a button release.
      *
-     * @param controller The controller on which a button was released.
      * @param button     The button that was released.
      * @param buttonID   The deviceID of the button that was released.
      */
-    void buttonUp(IController controller, IButton button, ButtonID buttonID);
+    void buttonUp(IButton button, ButtonID buttonID);
 
     /**
-     * TODO: Check if axis / value must be parameters too (analog sticks not implemented yet)
+     * Notifies a stick move.
      *
-     * @param controller
+     * @param axis
      * @param stick
      */
-    void moveStick(IController controller, StickID stick);
+    void moveStick(IAxis axis, StickID stick);
 
     /** */
     class IControllerAdapter implements IControllerListener {
 
-        @Override public void connected(IController controller) {
+        @Override public void buttonDown(IButton button, ButtonID buttonID) {
         }
 
-        @Override public void disConnected(IController controller) {
+        @Override public void buttonUp(IButton button, ButtonID buttonID) {
         }
 
-        @Override public void buttonDown(IController controller, IButton button, ButtonID buttonID) {
-        }
-
-        @Override public void buttonUp(IController controller, IButton button, ButtonID buttonID) {
-        }
-
-        @Override public void moveStick(IController controller, StickID stick) {
+        @Override public void moveStick(IAxis axis, StickID stick) {
         }
     }
 }

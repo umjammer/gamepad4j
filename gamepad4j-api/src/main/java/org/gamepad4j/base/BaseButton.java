@@ -89,7 +89,7 @@ public class BaseButton implements IButton {
      */
     public void setPressed(boolean isPressed) {
         if (isPressed != this.isPressed) {
-            logger.finer("Button press change: " + isPressed + "/ code: " + this.code + " / ID: "
+            logger.finest("Button press change: " + isPressed + "/ code: " + this.code + " / ID: "
                     + this.ID + " / label: " + this.label + " / key: " + this.labelKey);
         }
         this.isPressed = isPressed;
@@ -128,5 +128,10 @@ public class BaseButton implements IButton {
     @Override
     public String getDefaultLabel() {
         return this.label;
+    }
+
+    @Override
+    public String toString() {
+        return "Button:" + ID.toString();
     }
 }

@@ -147,4 +147,9 @@ public class BaseTrigger implements ITrigger {
     public String getDefaultLabel() {
         return this.label;
     }
+
+    @Override
+    public String toString() {
+        return "Trigger: " + ID.toString();
+    }
 }

@@ -11,13 +11,14 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface IAxis {
+public interface IAxis extends IComponent {
 
     /**
      * Returns the deviceID of this axis.
      *
      * @return The axis deviceID (type).
      */
+    @Override
     AxisID getID();
 
     /**
@@ -40,5 +41,6 @@ public interface IAxis {
      *
      * @param listener The axis listener.
      */
+    @Deprecated
     void addAxisListener(IAxisListener listener);
 }

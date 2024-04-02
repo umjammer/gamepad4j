@@ -20,6 +20,7 @@
 
 package org.gamepad4j.macos;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,7 +30,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
@@ -64,7 +64,9 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDElementTypeInput_Misc;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeNone;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDProductIDKey;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDProductKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDReportTypeOutput;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDVendorIDKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOReturnSuccess;
 
 
 /**
@@ -107,7 +109,7 @@ public class MacosxGamepad extends BaseGamepad {
 
         public static Object get(Pointer p) {
             ObjectContext context = new ObjectContext(p);
- logger.finer(context.id + ", " + map + "\n" + p.dump(0, 4));
+logger.finest(context.id + ", " + map + "\n" + p.dump(0, 4));
             return map.get(context.id);
         }
     }
@@ -156,6 +158,24 @@ public class MacosxGamepad extends BaseGamepad {
 
         /** avoid garbage collection */
         ObjectContext.ByReference context;
+
+        @Override
+        public void write(byte[] data, int length, int reportId) throws IOException {
+
+            int pad = reportId == 0 ? 0 : 1;
+            byte[] report = new byte[length + pad];
+            report[0] = (byte) (reportId & 0xff);
+            System.arraycopy(data, 0, report, pad, length);
+
+            int res = IOKitLib.INSTANCE.IOHIDDeviceSetReport(this.deviceRef,
+                    kIOHIDReportTypeOutput,
+                    CFIndex.of(reportId),
+                    report, CFIndex.of(report.length));
+
+            if (res != kIOReturnSuccess) {
+                throw new IOException("IOHIDDeviceSetReport failed: (0x%08X): " + res);
+            }
+        }
     }
 
     private Pointer /* IOHIDManagerRef */ hidManager = null;
@@ -199,7 +219,7 @@ if (device == null) {
  logger.severe("device is null: " + context + ", " + Integer.toHexString(context.getInt(0)) + ", " + result + ", " + sender);
  return;
 }
-logger.finer("onDeviceValueChanged: " + device.deviceID + ", " + context + ", " + Integer.toHexString(context.getInt(0)) + ", " + result + ", " + sender);
+logger.finest("onDeviceValueChanged: " + device.deviceID + ", " + context + ", " + Integer.toHexString(context.getInt(0)) + ", " + result + ", " + sender);
         Pointer /* IOHIDElementRef */ element = IOKitLib.INSTANCE.IOHIDValueGetElement(value);
         int /* IOHIDElementCookie */ cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
 
@@ -224,16 +244,17 @@ logger.finer("onDeviceValueChanged: " + device.deviceID + ", " + context + ", " 
                     }
 
                     Hat hat = hatValueToXY(integerValue, axisElement.logicalMax - axisElement.logicalMin + 1);
+logger.finest(axisIndex + ": " + hat);
 
                     if (hat.x() != device.axisStates[axisIndex]) {
-logger.finer("hat x: " + hat.x());
+logger.finest("hat x: " + hat.x());
                         device.fireAxisMove(axisIndex, hat.x());
 
                         device.axisStates[axisIndex] = hat.x();
                     }
 
                     if (hat.y() != device.axisStates[axisIndex + 1]) {
-logger.finer("hat y: " + hat.y());
+logger.finest("hat y: " + hat.y());
                         device.fireAxisMove(axisIndex + 1, hat.y());
 
                         device.axisStates[axisIndex + 1] = hat.y();
@@ -249,7 +270,7 @@ logger.finer("hat y: " + hat.y());
                     float floatValue = (integerValue - axisElement.logicalMin) /
                             (float) (axisElement.logicalMax - axisElement.logicalMin) * 2.0f - 1.0f;
 
-logger.finer(String.format("axis %d: %1.3f", axisIndex, floatValue));
+ logger.finest(String.format("axis %d: %1.3f", axisIndex, floatValue));
                     device.fireAxisMove(axisIndex, floatValue);
 
                     device.axisStates[axisIndex] = floatValue;
@@ -262,6 +283,7 @@ logger.finer(String.format("axis %d: %1.3f", axisIndex, floatValue));
         for (int buttonIndex = 0; buttonIndex < device.numButtons; buttonIndex++) {
             if (device.buttonElements.get(buttonIndex).cookie == cookie) {
                 boolean down = IOKitLib.INSTANCE.IOHIDValueGetIntegerValue(value).intValue() != 0;
+logger.finest("button: " + buttonIndex);
                 if (down) {
                     device.fireButtonDown(buttonIndex);
                 } else {
@@ -295,7 +317,7 @@ if (this_ == null) {
  logger.severe("this_ is null: " + context);
  return;
 }
-logger.finer("CHECKPOINT-4.S");
+logger.finest("CHECKPOINT-4.S");
         MacosDevice device = new MacosDevice(this_.listeners);
         device.deviceID = this_.nextDeviceID++;
         device.vendorID = getIntProperty(deviceRef, CFSTR(kIOHIDVendorIDKey));
@@ -332,22 +354,16 @@ logger.fine("mac device: " + description);
                 axis.hasNullState = IOKitLib.INSTANCE.IOHIDElementHasNullState(element);
                 axis.isHatSwitch = IOKitLib.INSTANCE.IOHIDElementGetUsage(element) == kHIDUsage_GD_Hatswitch;
                 axis.isHatSwitchSecondAxis = false;
-logger.finer("CHECKPOINT-4.2: " + axis);
+
+logger.finer("DEVICE " + (axis.isHatSwitch ? "HAT" : "AXIS") + ": " + axis);
+
                 device.axisElements.add(axis);
                 device.numAxes++;
-
-                if (device.axisElements.get(device.numAxes - 1).isHatSwitch) {
-                    axis = new Axis();
-                    axis.isHatSwitchSecondAxis = true;
-logger.finer("CHECKPOINT-4.3: " + axis);
-                    device.axisElements.add(axis);
-                    device.numAxes++;
-                }
 
             } else if (type == kIOHIDElementTypeInput_Button) {
                 Button button = new Button();
                 button.cookie = IOKitLib.INSTANCE.IOHIDElementGetCookie(element);
-logger.finer("CHECKPOINT-4.4: " + button);
+logger.finer("DEVICE BUTTON: " + button);
                 device.buttonElements.add(button);
                 device.numButtons++;
             }
@@ -363,7 +379,7 @@ logger.finer("CHECKPOINT-4.4: " + button);
         this_.devices.add(device);
 
         device.fireDeviceAttach();
-logger.finer("CHECKPOINT-4.E: axis: " + device.axisStates.length + ", button: " + device.buttonStates.length);
+logger.finest("CHECKPOINT-4.E:: axis: " + device.axisStates.length + ", button: " + device.buttonStates.length);
     }
 
     /** a callback when a device removed */
@@ -405,7 +421,7 @@ logger.fine("IOHIDDeviceRegisterInputValueCallback: stop");
     /** for RunLoopRun never returning */
     private void initInternal() {
         if (hidManager == null) {
-logger.finer("CHECKPOINT-0.S");
+logger.finest("CHECKPOINT-0.S");
             hidManager = IOKitLib.INSTANCE.IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
             IOKitLib.INSTANCE.IOHIDManagerScheduleWithRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
@@ -461,14 +477,14 @@ logger.finer("CHECKPOINT-0.S");
 logger.fine("mac init done.");
 
             CFLib.INSTANCE.CFRunLoopRun();
-logger.finer("CHECKPOINT-0.E");
+logger.finest("CHECKPOINT-0.E");
         }
     }
 
     @Override
     public void close() {
         executorService.shutdownNow();
-logger.fine("i am a mac, bye");
+logger.finer("i am a mac, bye");
 
         if (hidManager != null) {
             IOKitLib.INSTANCE.IOHIDManagerUnscheduleFromRunLoop(hidManager, CFLib.INSTANCE.CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);

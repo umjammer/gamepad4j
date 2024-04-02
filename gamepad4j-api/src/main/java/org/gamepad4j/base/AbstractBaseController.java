@@ -4,7 +4,10 @@
 
 package org.gamepad4j.base;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -13,6 +16,7 @@ import org.gamepad4j.ButtonID;
 import org.gamepad4j.DpadDirection;
 import org.gamepad4j.IAxis;
 import org.gamepad4j.IButton;
+import org.gamepad4j.IComponent;
 import org.gamepad4j.IController;
 import org.gamepad4j.IStick;
 import org.gamepad4j.ITrigger;
@@ -286,5 +290,19 @@ public abstract class AbstractBaseController implements IController {
             this.axes = new BaseAxis[0];
         }
         return this.axes;
+    }
+
+    @Override
+    public IComponent[] getComponents() {
+        List<IComponent> components = new ArrayList<>();
+        components.addAll(Arrays.asList(getButtons()));
+logger.finer("buttons: " + Arrays.toString(getButtons()));
+        components.addAll(Arrays.asList(getSticks()));
+logger.finer("sticks: " + Arrays.toString(getSticks()));
+        components.addAll(Arrays.asList(getTriggers()));
+logger.finer("triggers: " + Arrays.toString(getTriggers()));
+        components.addAll(Arrays.asList(getAxes()));
+logger.finer("axes: " + Arrays.toString(getAxes()));
+        return components.toArray(IComponent[]::new);
     }
 }

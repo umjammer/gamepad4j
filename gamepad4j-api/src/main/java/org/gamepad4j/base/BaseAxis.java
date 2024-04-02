@@ -10,6 +10,7 @@ import java.util.List;
 import org.gamepad4j.AxisID;
 import org.gamepad4j.IAxis;
 import org.gamepad4j.IAxisListener;
+import org.gamepad4j.IComponent;
 
 
 /**
@@ -37,7 +38,18 @@ public class BaseAxis implements IAxis {
     private float deadZoneNegative = -this.deadZone;
 
     /** List of axis event listeners. */
+    @Deprecated
     private List<IAxisListener> listeners = null;
+
+    private IComponent parent;
+
+    public IComponent getParent() {
+        return parent;
+    }
+
+    public void setParent(IComponent parent) {
+        this.parent = parent;
+    }
 
     /**
      * Creates a new base axis instance.
@@ -56,6 +68,7 @@ public class BaseAxis implements IAxis {
     }
 
     @Override
+    @Deprecated
     public void addAxisListener(IAxisListener listener) {
         if (this.listeners == null) {
             this.listeners = new ArrayList<>();
@@ -99,10 +112,15 @@ public class BaseAxis implements IAxis {
         }
         this.previousValue = this.value;
         this.value = value;
-        if (this.value != this.previousValue && this.listeners != null) {
-            for (IAxisListener listener : this.listeners) {
-                listener.moved(this.value);
-            }
-        }
+//        if (this.value != this.previousValue && this.listeners != null) {
+//            for (IAxisListener listener : this.listeners) {
+//                listener.moved(this.value);
+//            }
+//        }
+    }
+
+    @Override
+    public String toString() {
+        return "Axis" + number + ":" + ID.toString();
     }
 }

@@ -11,7 +11,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface ITrigger {
+public interface ITrigger extends IComponent {
 
     /**
      * Returns the deviceID of this trigger. May be "UNKNOWN" if
@@ -20,6 +20,7 @@ public interface ITrigger {
      * @return The deviceID of the trigger. If it is "TriggerID.UNKNOWN", the method
      * "getCode()" can be used to query the actual numerical value.
      */
+    @Override
     TriggerID getID();
 
     /**

@@ -4,15 +4,10 @@
 
 package org.gamepad4j;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.gamepad4j.IControllerListener.IControllerAdapter;
 
 
 /**
@@ -21,7 +16,7 @@ import org.gamepad4j.IControllerListener.IControllerAdapter;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public class Controllers {
+public final class Controllers {
 
     private static final Logger logger = Logger.getLogger(Controllers.class.getName());
 
@@ -34,31 +29,25 @@ public class Controllers {
     /**
      * Initializes the controller factory. Must be called once
      * before the controllers can be used.
+     *
+     * @throws IllegalStateException no provider or something wrong.
      */
     private Controllers() {
         try {
             for (IControllerProvider controllerProvider : ServiceLoader.load(IControllerProvider.class)) {
+                // TODO only one provider is activated
                 if (controllerProvider.isSupported()) {
-                    controllerProvider.initialize();
+                    controllerProvider.open();
                     this.controllerProvider = controllerProvider;
                     logger.fine("Controller provider ready: " + controllerProvider.getClass().getName());
                     return;
                 }
             }
-            throw new NoSuchElementException("no suitable provider");
+            throw new IllegalStateException("no suitable provider");
         } catch (Exception e) {
             logger.log(Level.FINER, e.toString(), e);
             throw new IllegalStateException("Failed to initialize controller provider instance", e);
         }
-    }
-
-    /**
-     * Shuts down the controller handler (releases all resources that
-     * might be held by any native wrapper / library). This should be
-     * called when the game is terminated.
-     */
-    public void shutdown() {
-        controllerProvider.release();
     }
 
     /**
@@ -77,12 +66,23 @@ public class Controllers {
         return controllerProvider.getControllers();
     }
 
+    /** */
+    public IController getController(int mid, int pid) {
+        for (IController controller : getControllers()) {
+logger.fine(String.format("%s: %4x, %4x%n", controller.getDescription(), controller.getVendorID(), controller.getProductID()));
+            if (controller.getVendorID() == mid && controller.getProductID() == pid) {
+                return controller;
+            }
+        }
+        throw new NoSuchElementException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
+    }
+
     /**
-     * Registers a listener for controller events.
+     * Registers a listener for controllers events.
      *
-     * @param listener The controller listener.
+     * @param listener controllers listener.
      */
-    public void addListener(IControllerListener listener) {
+    public void addListener(IControllersListener listener) {
         this.controllerProvider.addListener(listener);
     }
 
@@ -91,7 +91,7 @@ public class Controllers {
      *
      * @param listener The controller listener to remove.
      */
-    public void removeListener(IControllerListener listener) {
+    public void removeListener(IControllersListener listener) {
         this.controllerProvider.removeListener(listener);
     }
 }

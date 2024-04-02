@@ -10,6 +10,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
+@Deprecated
 public interface IAxisListener {
 
     /**

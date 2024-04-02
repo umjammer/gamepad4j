@@ -10,7 +10,7 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public enum StickID {
+public enum StickID implements Identifier {
 
     LEFT,
     RIGHT,

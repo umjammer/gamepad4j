@@ -20,6 +20,7 @@
 
 package org.gamepad4j.desktop;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -42,7 +43,7 @@ public interface Gamepad {
     }
 
     /** Represents an input device */
-    class Device {
+    abstract class Device {
 
         /**
          * Unique device identifier for application session, starting at 0 for the first device attached and
@@ -77,6 +78,9 @@ public interface Gamepad {
         protected Device(List<GamepadListener> listeners) {
             this.listeners = listeners;
         }
+
+        /** */
+        public abstract void write(byte[] data, int length, int reportId) throws IOException;
 
         /** */
         public void fireDeviceAttach() {
@@ -164,5 +168,33 @@ public interface Gamepad {
          * a function to be called whenever an axis on any attached device is moved.
          */
         void axisMove(Device device, int axisID, float value, double timestamp);
+    }
+
+    class GamepadAdapter implements GamepadListener {
+
+        /**
+         * a function to be called whenever a device is attached.
+         */
+        @Override public void deviceAttach(Device device) {}
+
+        /**
+         * a function to be called whenever a device is detached.
+         */
+        @Override public void deviceRemove(Device device) {}
+
+        /**
+         * a function to be called whenever a button on any attached device is pressed.
+         */
+        @Override public void buttonDown(Device device, int buttonID, double timestamp) {}
+
+        /**
+         * a function to be called whenever a button on any attached device is released.
+         */
+        @Override public void buttonUp(Device device, int buttonID, double timestamp) {}
+
+        /**
+         * a function to be called whenever an axis on any attached device is moved.
+         */
+        @Override public void axisMove(Device device, int axisID, float value, double timestamp) {}
     }
 }

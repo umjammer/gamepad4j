@@ -38,34 +38,34 @@ public class Mapping {
     }
 
     /** Stores digital button mappings. */
-    private static Map<Long, Map<Integer, String>> buttonMapId = new HashMap<>();
+    private static final Map<Long, Map<Integer, String>> buttonMapId = new HashMap<>();
 
     /** Stores trigger mappings. */
-    private static Map<Long, Map<Integer, String>> triggerAxisMapId = new HashMap<>();
+    private static final Map<Long, Map<Integer, String>> triggerAxisMapId = new HashMap<>();
 
     /** Stores d-pad mappings. */
-    private static Map<Long, Map<Integer, String>> dpadAxisMapId = new HashMap<>();
+    private static final Map<Long, Map<Integer, String>> dpadAxisMapId = new HashMap<>();
 
     /** Stores stick mappings. */
-    private static Map<Long, Map<Integer, String>> stickAxisMapId = new HashMap<>();
+    private static final Map<Long, Map<Integer, String>> stickAxisMapId = new HashMap<>();
 
     /** Stores the default button text labels. */
-    private static Properties defaultLabels = new Properties();
+    private static final Properties defaultLabels = new Properties();
 
     /** Stores the default label for each button of each device type. */
-    private static Map<Long, Map<ButtonID, String>> defaultButtonLabelMap = new HashMap<>();
+    private static final Map<Long, Map<ButtonID, String>> defaultButtonLabelMap = new HashMap<>();
 
     /** Stores the default label for each trigger of each device type. */
-    private static Map<Long, Map<TriggerID, String>> defaultTriggerLabelMap = new HashMap<>();
+    private static final Map<Long, Map<TriggerID, String>> defaultTriggerLabelMap = new HashMap<>();
 
     /** Stores the label key for each button of each device type. */
-    private static Map<Long, Map<ButtonID, String>> buttonLabelKeyMap = new HashMap<>();
+    private static final Map<Long, Map<ButtonID, String>> buttonLabelKeyMap = new HashMap<>();
 
     /** Stores the label key for each trigger of each device type. */
-    private static Map<Long, Map<TriggerID, String>> triggerLabelKeyMap = new HashMap<>();
+    private static final Map<Long, Map<TriggerID, String>> triggerLabelKeyMap = new HashMap<>();
 
     /** Lazy label initialization flag. */
-    private static boolean labelsInitialized = false;
+    private static final boolean labelsInitialized = false;
 
     /**
      * Loads the mapping for the given controller (if not available yet).
@@ -100,7 +100,7 @@ public class Mapping {
                             controller.setDefaultDeadZone(deadZone);
                         }
                     } else {
-                        logger.fine("WARNING: Mapping does not exist: " + mappingFileName);
+                        logger.warning("Mapping does not exist: " + mappingFileName);
                     }
                 }
             }
@@ -112,7 +112,7 @@ logger.log(Level.FINER, ex.toString(), ex);
     }
 
     /**
-     * @param properties
+     * @param properties mapping properties
      */
     private static void addMappings(Properties properties) {
         long deviceTypeIdentifier = extractDeviceIdentifier(properties);
@@ -187,19 +187,19 @@ logger.log(Level.FINER, ex.toString(), ex);
     private static void addMapping(MappingType type, String namePart, String value, long deviceTypeIdentifier) {
         if (type == MappingType.BUTTON) {
             Map<Integer, String> buttonMap = getOrCreateMapForDevice(buttonMapId, deviceTypeIdentifier);
-            logger.fine("Add mapping for BUTTON: " + namePart + "=" + value);
+logger.finer("Add mapping for BUTTON: " + namePart + "=" + value);
             buttonMap.put(intFromString(value), namePart);
         } else if (type == MappingType.TRIGGER_AXIS) {
             Map<Integer, String> triggerMap = getOrCreateMapForDevice(triggerAxisMapId, deviceTypeIdentifier);
-            logger.fine("Add mapping for TRIGGER: " + namePart + "=" + value);
+logger.finer("Add mapping for TRIGGER: " + namePart + "=" + value);
             triggerMap.put(intFromString(value), namePart);
         } else if (type == MappingType.DPAD_AXIS) {
             Map<Integer, String> dpadMap = getOrCreateMapForDevice(dpadAxisMapId, deviceTypeIdentifier);
-            logger.fine("Add mapping for DPAD: " + namePart + "=" + value);
+logger.finer("Add mapping for DPAD: " + namePart + "=" + value);
             dpadMap.put(intFromString(value), namePart);
         } else if (type == MappingType.STICK_AXIS) {
             Map<Integer, String> stickMap = getOrCreateMapForDevice(stickAxisMapId, deviceTypeIdentifier);
-            logger.fine("Add mapping for STICK: " + namePart + "=" + value);
+logger.finer("Add mapping for STICK: " + namePart + "=" + value);
             stickMap.put(intFromString(value), namePart);
         }
     }

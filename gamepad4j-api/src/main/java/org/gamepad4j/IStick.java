@@ -11,13 +11,14 @@ package org.gamepad4j;
  * @author Marcel Schoen
  * @version $Revision: $
  */
-public interface IStick {
+public interface IStick extends IComponent {
 
     /**
      * Returns the deviceID of this stick.
      *
      * @return The stick deviceID.
      */
+    @Override
     StickID getID();
 
     /**

@@ -20,6 +20,7 @@
 
 package org.gamepad4j.linux;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +42,6 @@ import net.java.games.input.linux.LinuxIO.input_event;
 import net.java.games.input.linux.LinuxIO.input_id;
 import net.java.games.input.linux.LinuxIO.stat;
 import org.gamepad4j.desktop.BaseGamepad;
-import org.gamepad4j.macos.MacosxGamepad;
 import org.gamepad4j.util.PlatformUtil;
 
 import static net.java.games.input.linux.LinuxIO.ABS_CNT;
@@ -83,6 +83,11 @@ public class LinuxGamepad extends BaseGamepad {
         int[] buttonMap = new int[KEY_CNT - BTN_MISC];
         int[] axisMap = new int[ABS_CNT];
         input_absinfo[] axisInfo = new input_absinfo[ABS_CNT];
+
+        @Override
+        public void write(byte[] data, int length, int reportId) throws IOException {
+            throw new UnsupportedOperationException("not implemented yet");
+        }
     }
 
     private final ScheduledExecutorService detectSes = Executors.newSingleThreadScheduledExecutor();
