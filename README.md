@@ -2,13 +2,21 @@
 [![Java CI](https://github.com/umjammer/Gamepad4J/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/Gamepad4J/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/Gamepad4J/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/Gamepad4J/actions/workflows/codeql-analysis.yml)
 ![Java](https://img.shields.io/badge/Java-17-b07219)
+[![Parent](https://img.shields.io/badge/Parent-jinput-pink)](https://github.com/umjammer/jinput)
 
 # Gamepad4J
+
+<br/>
+<img alt="logo" src="https://github.com/umjammer/gamepad4j/assets/493908/f22a1ade-a730-48e4-8f71-681e5cc01aa6" width="120" />
+<br/>
+<br/>
+
 
 🎮 modified [Gamepad4J](https://github.com/born2snipe/gamepad4j).
 
  * use jna instead of jni
  * use event listener instead of polling
+ * [jinput](https://github.com/umjammer/jinput) spi
 
 ## Install
 
@@ -17,7 +25,7 @@
 ## TODO
 
  * linux, windows are not tested
- * jinput spi
+ * ~~jinput spi~~
 
 ## LESSON
 
@@ -26,7 +34,7 @@
 
 ---
 
-# Original
+# [Original](https://github.com/born2snipe/gamepad4j)
 
 A simple, elegant and powerful API for using gamepads like the Xbox 360 or DualShock 3 pad in Java-based games. 
 
@@ -162,3 +170,6 @@ For the desktop support, this API uses native libraries, wrapped with JNI. In or
 You will have to adapt some environment variables in the corresponding build scripts, according to your environment, before you can compile the code.
 
 Once compiled, the native libraries have been copied into the resources folder. Just rebuild the Jar file, and bob's your uncle.
+
+---
+<sub>image by <a href="https://www.pngwing.com/en/free-png-nvjdb">pngwing.com</a></sub>
